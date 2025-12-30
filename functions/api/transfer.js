@@ -77,5 +77,21 @@ export async function onRequestGet({ request, env }) {
         
         return new Response(JSON.stringify({ ok: true, items: history.results, currentUserId: session.user_id }), { status: 200 });
     }
+
+    if (type === "check") {
+        const query = url.searchParams.get("q");
+        if(!query) return new Response(JSON.stringify({ ok: false }), { status: 400 });
+        
+        let user;
+        if (/^\d+$/.test(query)) {
+            user = await env.DB.prepare("SELECT id, name FROM users WHERE id = ?").bind(query).first();
+        } else {
+            user = await env.DB.prepare("SELECT id, name FROM users WHERE name = ?").bind(query).first();
+        }
+        
+        if(user) return new Response(JSON.stringify({ ok: true, name: user.name, id: user.id }), { status: 200 });
+        return new Response(JSON.stringify({ ok: false, error: "Not found" }), { status: 404 });
+    }
+
     return new Response(JSON.stringify({ ok: false }), { status: 400 });
 }
