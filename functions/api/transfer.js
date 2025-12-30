@@ -11,15 +11,21 @@ export async function onRequestPost({ request, env }) {
     let body;
     try { body = await request.json(); } catch(e) { return new Response(JSON.stringify({ ok: false, error: "Bad JSON" }), { status: 400 }); }
 
-    const receiverName = (body.receiver || "").trim();
+    const inputReceiver = (body.receiver || "").trim();
     const amount = parseInt(body.amount);
 
-    if (!receiverName) return new Response(JSON.stringify({ ok: false, error: "Vui lòng nhập tên người nhận" }), { status: 400 });
+    if (!inputReceiver) return new Response(JSON.stringify({ ok: false, error: "Vui lòng nhập tên hoặc ID người nhận" }), { status: 400 });
     if (isNaN(amount) || amount <= 0) return new Response(JSON.stringify({ ok: false, error: "Số tiền không hợp lệ" }), { status: 400 });
     if (amount > session.total_score) return new Response(JSON.stringify({ ok: false, error: "Số dư không đủ" }), { status: 400 });
-    if (receiverName === session.name) return new Response(JSON.stringify({ ok: false, error: "Không thể tự chuyển tiền" }), { status: 400 });
+    if (inputReceiver === session.name || inputReceiver == session.user_id) return new Response(JSON.stringify({ ok: false, error: "Không thể tự chuyển tiền" }), { status: 400 });
 
-    const receiver = await env.DB.prepare("SELECT id, total_score FROM users WHERE name = ?").bind(receiverName).first();
+    let receiver;
+    if (/^\d+$/.test(inputReceiver)) {
+        receiver = await env.DB.prepare("SELECT id, name, total_score FROM users WHERE id = ?").bind(inputReceiver).first();
+    } else {
+        receiver = await env.DB.prepare("SELECT id, name, total_score FROM users WHERE name = ?").bind(inputReceiver).first();
+    }
+
     if (!receiver) return new Response(JSON.stringify({ ok: false, error: "Người nhận không tồn tại" }), { status: 404 });
 
     const txId = crypto.randomUUID().split('-')[0].toUpperCase();
@@ -37,7 +43,8 @@ export async function onRequestPost({ request, env }) {
             txId, 
             amount, 
             sender: session.name, 
-            receiver: receiverName, 
+            receiver: receiver.name,
+            receiverId: receiver.id,
             date: now * 1000,
             newBalance: session.total_score - amount
         }), { status: 200 });
@@ -68,7 +75,7 @@ export async function onRequestGet({ request, env }) {
             ORDER BY t.created_at DESC LIMIT 50
         `).bind(session.user_id, session.user_id).all();
         
-        return new Response(JSON.stringify({ ok: true, items: history.results }), { status: 200 });
+        return new Response(JSON.stringify({ ok: true, items: history.results, currentUserId: session.user_id }), { status: 200 });
     }
     return new Response(JSON.stringify({ ok: false }), { status: 400 });
 }
