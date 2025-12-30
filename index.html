@@ -305,30 +305,31 @@
 
         .bill-overlay {
             position: fixed; inset: 0; z-index: 100000;
-            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+            background: rgba(0,0,0,0.95); backdrop-filter: blur(20px);
             display: flex; align-items: center; justify-content: center;
             opacity: 0; pointer-events: none; transition: 0.5s;
         }
         .bill-overlay.active { opacity: 1; pointer-events: auto; }
         .bill-paper {
-            width: 90%; max-width: 360px;
-            background: #111;
-            border: 2px solid var(--color-gold);
-            padding: 24px;
-            box-shadow: 0 0 50px rgba(209, 178, 124, 0.2);
+            width: 95%; max-width: 600px;
+            background: #0f0f11;
+            border: 1px solid var(--color-gold);
+            padding: 40px;
+            box-shadow: 0 0 100px rgba(209, 178, 124, 0.3);
             position: relative;
-            transform: translateY(50px); transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: scale(0.9); transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex; flex-direction: column;
         }
-        .bill-overlay.active .bill-paper { transform: translateY(0); }
-        .bill-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.85rem; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 4px; }
-        .bill-row span:last-child { color: white; text-align: right; }
-        .bill-row span:first-child { color: #888; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 1px; }
+        .bill-overlay.active .bill-paper { transform: scale(1); }
+        .bill-row { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 1.1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; }
+        .bill-row span:last-child { color: white; text-align: right; font-family: var(--font-mono); }
+        .bill-row span:first-child { color: #888; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 2px; }
         .stamp {
-            position: absolute; bottom: 20px; right: 20px;
-            width: 80px; height: 80px; border: 3px solid #D00000; border-radius: 50%;
+            position: absolute; bottom: 40px; right: 40px;
+            width: 120px; height: 120px; border: 4px solid #D00000; border-radius: 50%;
             color: #D00000; display: flex; align-items: center; justify-content: center;
-            font-weight: 900; opacity: 0.6; transform: rotate(-15deg); font-family: 'Courier New', Courier, monospace;
-            font-size: 1.2rem;
+            font-weight: 900; opacity: 0.8; transform: rotate(-15deg); font-family: 'Courier New', Courier, monospace;
+            font-size: 1.8rem;
             mask-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxmaWx0ZXIgaWQ9Im5vaXNlIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMC44IiBudW1PY3RhdmVzPSIzIiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsdGVyPSJ1cmwoI25vaXNlKSIgb3BhY2l0eT0iMC41Ii8+PC9zdmc+');
         }
     </style>
@@ -342,22 +343,22 @@
         
         <div id="bill-modal" class="bill-overlay">
             <div class="bill-paper">
-                <div class="text-center mb-6">
-                    <h2 class="font-serif text-3xl text-gold italic">Receipt</h2>
-                    <p class="text-[10px] text-gray-500 uppercase tracking-[0.3em]">Hóa đơn giao dịch</p>
+                <div class="text-center mb-10 border-b border-gold/30 pb-6">
+                    <h2 class="font-serif text-5xl text-gold italic mb-2">Transaction Receipt</h2>
+                    <p class="text-xs text-gray-500 uppercase tracking-[0.5em]">Hóa đơn điện tử</p>
                 </div>
-                <div class="space-y-2 font-mono text-gray-300">
-                    <div class="bill-row"><span>Mã GD</span><span id="bill-id">#TX-0000</span></div>
-                    <div class="bill-row"><span>Ngày giờ</span><span id="bill-date">--/--/--</span></div>
-                    <div class="bill-row"><span>Người gửi</span><span id="bill-sender" class="text-gold">---</span></div>
-                    <div class="bill-row"><span>Người nhận</span><span id="bill-receiver" class="text-gold">---</span></div>
-                    <div class="bill-row border-none pt-2"><span>Số tiền</span><span id="bill-amount" class="text-xl font-bold text-white">0</span></div>
+                <div class="space-y-4 font-mono text-gray-300 flex-1">
+                    <div class="bill-row"><span>Transaction ID</span><span id="bill-id">#TX-0000</span></div>
+                    <div class="bill-row"><span>Date & Time</span><span id="bill-date">--/--/--</span></div>
+                    <div class="bill-row"><span>Sender</span><span id="bill-sender" class="text-gold">---</span></div>
+                    <div class="bill-row"><span>Receiver</span><span id="bill-receiver" class="text-gold">---</span></div>
+                    <div class="bill-row border-none pt-4 mt-4 bg-white/5 p-4 rounded"><span>Total Amount</span><span id="bill-amount" class="text-3xl font-bold text-gold">0</span></div>
                 </div>
-                <div class="mt-2 mb-6 text-center">
-                    <p id="bill-words" class="text-xs text-gray-500 italic font-serif leading-tight">...</p>
+                <div class="mt-8 mb-10 text-center">
+                    <p id="bill-words" class="text-lg text-gray-400 italic font-serif leading-tight">...</p>
                 </div>
-                <button onclick="document.getElementById('bill-modal').classList.remove('active')" class="btn-lux w-full text-xs">ĐÓNG</button>
-                <div class="stamp">PAID</div>
+                <button onclick="document.getElementById('bill-modal').classList.remove('active')" class="btn-lux w-full text-sm py-4 hover:bg-gold hover:text-black">CLOSE RECEIPT</button>
+                <div class="stamp">SUCCESS</div>
             </div>
         </div>
 
@@ -396,7 +397,7 @@
                     <div class="flex items-center gap-3">
                          <div class="text-right mr-2">
                             <p class="text-[10px] text-gray-500 uppercase tracking-widest">Balance</p>
-                            <p id="dash-score" class="font-serif text-2xl text-white">$ 0</p>
+                            <p id="dash-score" class="font-serif text-2xl text-white transition-all duration-300">$ 0</p>
                         </div>
                         <div onclick="app.showProfile()" class="avatar-btn group">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 group-hover:text-gold transition-colors"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
@@ -487,25 +488,27 @@
                     <div class="deepglass p-6 rounded-lg relative overflow-hidden">
                         <div class="absolute -top-10 -right-10 w-32 h-32 bg-gold/10 rounded-full blur-2xl"></div>
                         <p class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Số Dư Khả Dụng</p>
-                        <p id="bank-balance" class="text-3xl font-serif text-white">$ 0</p>
+                        <p id="bank-balance" class="text-3xl font-serif text-white transition-all duration-300">$ 0</p>
                     </div>
 
                     <div class="space-y-4">
                          <h3 class="text-xs text-gold uppercase tracking-widest">Chuyển Tiền</h3>
                          <div class="space-y-3">
-                             <div>
-                                 <input type="text" id="tx-receiver" class="input-lux text-left text-sm" placeholder="Tên người nhận (Chính xác)">
+                             <div class="relative">
+                                 <input type="text" id="tx-receiver" class="input-lux text-left text-sm" placeholder="Nhập ID hoặc Tên người nhận">
+                                 <div id="rx-check-loading" class="absolute right-2 top-3 hidden"><div class="w-4 h-4 border-2 border-gold border-t-transparent rounded-full animate-spin"></div></div>
                              </div>
                              <div>
                                  <input type="number" id="tx-amount" class="input-lux text-left text-sm" placeholder="Số tiền (VNĐ)">
                              </div>
+                             <div id="rx-preview" class="text-xs text-gray-400 italic h-4 pl-2"></div>
                              <button onclick="app.profile.sendMoney()" class="btn-lux w-full bg-gold/10 border-gold text-gold font-bold hover:bg-gold/20">XÁC NHẬN CHUYỂN</button>
                          </div>
                     </div>
 
                     <div>
                         <h3 class="text-xs text-gray-500 uppercase tracking-widest mb-3">Lịch Sử Giao Dịch</h3>
-                        <div class="deepglass rounded-lg overflow-hidden h-64 overflow-y-auto no-scrollbar" id="tx-history-list">
+                        <div class="h-[400px] overflow-y-auto no-scrollbar space-y-2 pb-10" id="tx-history-list">
                             <div class="p-4 text-center text-xs text-gray-600 italic">Chưa có giao dịch nào</div>
                         </div>
                     </div>
@@ -727,29 +730,48 @@
         const $$ = (s) => document.querySelectorAll(s);
         const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-        function numberToVietnameseText(n) {
-            if (n === 0) return "Không đồng";
-            const dv = ["", "mươi", "trăm", "nghìn", "triệu", "tỷ", "nghìn tỷ", "triệu tỷ"];
-            const cs = ["không", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"];
-            let str = ""; let i = 0;
-            while (n > 0) {
-                let d = n % 1000;
-                if (d > 0) {
-                    let s = "";
-                    let h = Math.floor(d / 100); let c = Math.floor((d % 100) / 10); let u = d % 10;
-                    if (h > 0) s += cs[h] + " trăm "; else if (n > 1000) s += "không trăm ";
-                    if (c > 0) {
-                        s += (c === 1 ? "mười " : cs[c] + " mươi ");
-                        if (u > 0) s += (u === 1 ? "mốt" : u === 5 ? "lăm" : cs[u]);
-                    } else if (u > 0) {
-                        s += (h > 0 || n > 1000 ? "linh " : "") + cs[u];
-                    }
-                    str = s + " " + dv[i + 3] + " " + str;
+        function numberToEnglishText(n) {
+            const units = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+            const teens = ["ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+            const tens = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+            const scales = ["", "thousand", "million", "billion"];
+
+            if (n === 0) return "Zero dollars";
+
+            let words = "";
+            let scaleIndex = 0;
+
+            function chunk(num) {
+                let str = "";
+                if (num >= 100) {
+                    str += units[Math.floor(num / 100)] + " hundred ";
+                    num %= 100;
                 }
-                i++; n = Math.floor(n / 1000);
+                if (num >= 10 && num <= 19) {
+                    str += teens[num - 10] + " ";
+                } else if (num >= 20) {
+                    str += tens[Math.floor(num / 10)] + " ";
+                    num %= 10;
+                }
+                if (num > 0 && num < 10) {
+                    str += units[num] + " ";
+                }
+                return str.trim();
             }
-            str = str.replace(/\s+/g, ' ').trim();
-            return str.charAt(0).toUpperCase() + str.slice(1) + " đồng";
+
+            while (n > 0) {
+                let remainder = n % 1000;
+                if (remainder > 0) {
+                    let s = chunk(remainder);
+                    if (scaleIndex > 0) s += " " + scales[scaleIndex];
+                    words = s + " " + words;
+                }
+                n = Math.floor(n / 1000);
+                scaleIndex++;
+            }
+
+            words = words.trim();
+            return words.charAt(0).toUpperCase() + words.slice(1) + " dollars";
         }
 
         const app = {
@@ -956,12 +978,38 @@
                 if(!app.sessionToken) return;
                 const data = await app.api.sendTx(0, 'SYNC'); 
                 if(data && data.ok) {
-                    if(typeof data.score === 'number') app.user.score = data.score;
+                    if(typeof data.score === 'number') {
+                         app.animateBalance(data.score);
+                         app.user.score = data.score;
+                    }
                     if(typeof data.totalWins === 'number') app.user.totalWins = data.totalWins;
                     if(typeof data.maxWin === 'number') app.user.bestWin = data.maxWin;
-                    app.updateDash();
                     app.pnl.renderStats();
                 }
+            },
+
+            animateBalance(target) {
+                const els = $$('.user-balance-display, #dash-score, #bank-balance');
+                if(!els.length) return;
+                
+                const currentStr = $('#dash-score').innerText.replace('$ ','').replace(/,/g,'');
+                const start = parseInt(currentStr) || 0;
+                if(start === target) return;
+
+                const duration = 1000;
+                const startTime = performance.now();
+
+                function update(time) {
+                    const elapsed = time - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const ease = 1 - Math.pow(1 - progress, 3);
+                    
+                    const val = Math.floor(start + (target - start) * ease);
+                    els.forEach(el => el.innerText = '$ ' + val.toLocaleString());
+
+                    if(progress < 1) requestAnimationFrame(update);
+                }
+                requestAnimationFrame(update);
             },
 
             feed: {
@@ -1027,7 +1075,6 @@
                     if (tab === 'perf') app.pnl.render();
                 },
                 async loadBank() {
-                    $('#bank-balance').innerText = '$ ' + app.user.score.toLocaleString();
                     const res = await fetch(app.apiBase + '/transfer?type=history', {
                          headers: { 'Authorization': 'Bearer ' + app.sessionToken }
                     });
@@ -1036,14 +1083,63 @@
                     if(data.ok && data.items && data.items.length > 0) {
                         list.innerHTML = data.items.map(t => {
                             const isSend = t.sender_id === app.user.id.replace('U',''); 
-                            const cls = isSend ? "text-red-400" : "text-green-400";
-                            const sign = isSend ? "-" : "+";
-                            const name = isSend ? `To: ${t.receiver_name}` : `From: ${t.sender_name}`;
+                            const isReceive = !isSend;
+                            
+                            const amountCls = isReceive ? "text-green-400" : "text-red-400";
+                            const iconCls = isReceive ? "bg-green-500/20 text-green-500" : "bg-red-500/20 text-red-500";
+                            const arrow = isReceive ? "↓" : "↑";
+                            const sign = isReceive ? "+" : "-";
+                            
+                            const label = isReceive ? "Nhận từ" : "Gửi đến";
+                            const personName = isReceive ? t.sender_name : t.receiver_name;
                             const date = new Date(t.created_at * 1000).toLocaleString('vi-VN');
-                            return `<div class="flex justify-between items-center py-2 border-b border-white/5 last:border-0"><div><p class="text-xs text-white font-serif">${name}</p><p class="text-[9px] text-gray-500 font-mono">${t.id} • ${date}</p></div><div class="font-mono text-xs ${cls}">${sign}$ ${t.amount.toLocaleString()}</div></div>`;
+
+                            return `
+                            <div class="flex items-center justify-between p-3 border-b border-white/5 bg-white/5 rounded-lg mb-2 hover:bg-white/10 transition-colors">
+                                <div class="flex items-center gap-3">
+                                     <div class="w-10 h-10 rounded-full ${iconCls} flex items-center justify-center font-bold text-lg">
+                                         ${arrow}
+                                     </div>
+                                     <div>
+                                         <p class="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">${label}</p>
+                                         <p class="text-sm font-bold text-gray-200 font-serif text-lg">${personName}</p>
+                                         <p class="text-[10px] text-gray-600 font-mono mt-0.5">${t.id}</p>
+                                     </div>
+                                </div>
+                                <div class="text-right">
+                                     <p class="font-mono font-bold text-lg ${amountCls}">
+                                         ${sign}$ ${t.amount.toLocaleString()}
+                                     </p>
+                                     <p class="text-[10px] text-gray-500">${date}</p>
+                                </div>
+                            </div>`;
                         }).join('');
                     } else {
                         list.innerHTML = `<div class="p-4 text-center text-xs text-gray-600 italic">Chưa có giao dịch nào</div>`;
+                    }
+                },
+                async checkUser() {
+                    const val = $('#tx-receiver').value.trim();
+                    const preview = $('#rx-preview');
+                    const loader = $('#rx-check-loading');
+                    
+                    if(!val) { preview.innerText = ''; return; }
+                    
+                    loader.classList.remove('hidden');
+                    try {
+                        const res = await fetch(app.apiBase + '/transfer?type=check&q=' + encodeURIComponent(val), {
+                             headers: { 'Authorization': 'Bearer ' + app.sessionToken }
+                        });
+                        const data = await res.json();
+                        loader.classList.add('hidden');
+                        
+                        if(data.ok) {
+                            preview.innerHTML = `<span class="text-green-500">✓ Tìm thấy:</span> <span class="text-gold font-bold">${data.name}</span> (ID: ${data.id})`;
+                        } else {
+                             preview.innerHTML = `<span class="text-red-500">✗ Không tìm thấy người dùng này</span>`;
+                        }
+                    } catch(e) {
+                        loader.classList.add('hidden');
                     }
                 },
                 async sendMoney() {
@@ -1063,11 +1159,11 @@
                         const data = await res.json();
                         
                         if(data.ok) {
+                            app.animateBalance(data.newBalance);
                             app.user.score = data.newBalance;
-                            app.updateDash();
                             this.showBill(data);
                             this.loadBank();
-                            $('#tx-receiver').value = ''; $('#tx-amount').value = '';
+                            $('#tx-receiver').value = ''; $('#tx-amount').value = ''; $('#rx-preview').innerText = '';
                         } else {
                             alert(data.error || "Lỗi giao dịch");
                         }
@@ -1076,11 +1172,11 @@
                 },
                 showBill(data) {
                     $('#bill-id').innerText = '#' + data.txId;
-                    $('#bill-date').innerText = new Date(data.date).toLocaleString('vi-VN');
+                    $('#bill-date').innerText = new Date(data.date).toLocaleString('en-US');
                     $('#bill-sender').innerText = data.sender;
                     $('#bill-receiver').innerText = data.receiver;
                     $('#bill-amount').innerText = '$ ' + data.amount.toLocaleString();
-                    $('#bill-words').innerText = numberToVietnameseText(data.amount) + ".";
+                    $('#bill-words').innerText = numberToEnglishText(data.amount);
                     
                     app.audio.playWin();
                     $('#bill-modal').classList.add('active');
@@ -1100,8 +1196,17 @@
                 }
                 this.online.init();
                 this.animLoop();
-                setInterval(() => this.syncData(), 5000);
+                setInterval(() => this.syncData(), 2000);
                 setInterval(() => this.leaderboard.render(this.leaderboard.activeTab, true), 10000);
+                
+                const rxInput = $('#tx-receiver');
+                if(rxInput) {
+                    let timeout = null;
+                    rxInput.addEventListener('keyup', () => {
+                        clearTimeout(timeout);
+                        timeout = setTimeout(() => this.profile.checkUser(), 500);
+                    });
+                }
             },
 
             initFxCanvas() {
@@ -1188,6 +1293,8 @@
                 
                 if(amount > 0) this.triggerWinFx(amount);
                 else if(amount < 0) this.triggerLoseFx(amount);
+                
+                app.animateBalance(this.user.score);
             },
 
             triggerWinFx(amount) {
