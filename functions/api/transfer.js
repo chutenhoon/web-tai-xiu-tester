@@ -86,6 +86,13 @@ export async function onRequestPost({ request, env }) {
         });
     }
 
+    if (receiver.id === session.user_id) {
+        return new Response(JSON.stringify({ ok: false, error: "Không thể tự chuyển tiền" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+        });
+    }
+
     const txCode = crypto.randomUUID().split("-")[0].toUpperCase();
     const now = Math.floor(Date.now() / 1000);
 
