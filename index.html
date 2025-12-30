@@ -1,0 +1,1712 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Salon de Jeux - Luxury Casino</title>
+    <meta property="og:title" content="Salon de Jeux - Luxury Casino">
+    <meta property="og:description" content="Play for glory, not for money.">
+    <meta property="og:image" content="anh-bia.png">
+    <meta property="og:type" content="website">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Manrope:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --color-bg: #0A0A0C;
+            --color-gold: #D1B27C;
+            --color-gold-dim: #8a734b;
+            --color-white: #F8F5EF;
+            --color-grey: #1B1B1E;
+            --color-violet-chrome: #6D597A; 
+            --color-violet-light: #B56576;
+            --font-serif: 'Cormorant Garamond', serif;
+            --font-sans: 'Manrope', sans-serif;
+            --ease-lux: cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        body {
+            background-color: var(--color-bg);
+            color: var(--color-white);
+            font-family: var(--font-sans);
+            overflow: hidden;
+            background-image: radial-gradient(circle at 50% 50%, #1a1a1e 0%, #0a0a0c 80%);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .font-serif { font-family: var(--font-serif); }
+        .font-sans { font-family: var(--font-sans); }
+        .text-gold { color: var(--color-gold); }
+        .text-ivory { color: var(--color-white); }
+        
+        .deepglass {
+            background: rgba(27, 27, 30, 0.7);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(209, 178, 124, 0.1);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+        }
+
+        .btn-lux {
+            border: 1px solid var(--color-gold);
+            color: var(--color-gold);
+            background: transparent;
+            font-family: var(--font-sans);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 10px 24px;
+            font-size: 0.8rem;
+            transition: all 0.4s var(--ease-lux);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-lux:hover:not(:disabled) {
+            background: rgba(209, 178, 124, 0.15);
+            box-shadow: 0 0 20px rgba(209, 178, 124, 0.25);
+            transform: translateY(-1px);
+        }
+        .btn-lux:active:not(:disabled) { transform: scale(0.98); }
+        .btn-lux:disabled { opacity: 0.3; cursor: not-allowed; border-color: #555; color: #555; }
+
+        .btn-pill { border-radius: 9999px; }
+        .btn-selected {
+            background: var(--color-gold) !important;
+            color: var(--color-bg) !important;
+            font-weight: 700;
+            box-shadow: 0 0 20px rgba(209, 178, 124, 0.5);
+        }
+
+        input.input-lux {
+            background: rgba(255,255,255,0.03);
+            border: none;
+            border-bottom: 1px solid var(--color-gold-dim);
+            color: var(--color-gold);
+            font-family: var(--font-serif);
+            font-size: 1.5rem;
+            text-align: center;
+            outline: none;
+            transition: 0.3s;
+            width: 100%;
+            padding: 10px;
+        }
+        input.input-lux:focus { border-color: var(--color-gold); background: rgba(255,255,255,0.05); }
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+        .view-section {
+            position: absolute; inset: 0; opacity: 0; visibility: hidden;
+            transition: opacity 0.5s var(--ease-lux), transform 0.5s var(--ease-lux);
+            display: flex; flex-direction: column;
+            transform: scale(1.05); pointer-events: none;
+        }
+        .view-section.active { opacity: 1; visibility: visible; transform: scale(1); pointer-events: auto; }
+
+        .game-card {
+            background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.5s var(--ease-lux);
+            position: relative; overflow: hidden;
+        }
+        .game-card:hover {
+            border-color: var(--color-gold);
+            box-shadow: 0 0 30px rgba(209, 178, 124, 0.2);
+            transform: translateY(-5px);
+        }
+        .game-card::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(209,178,124,0.1) 0%, transparent 60%);
+            opacity: 0; transition: opacity 0.5s; pointer-events: none;
+        }
+        .game-card:hover::before { opacity: 1; }
+
+        @keyframes shake {
+            0% { transform: rotate(0deg); } 25% { transform: rotate(5deg); }
+            50% { transform: rotate(-5deg); } 75% { transform: rotate(5deg); } 100% { transform: rotate(0deg); }
+        }
+        .shaking { animation: shake 0.4s infinite; }
+        
+        .die {
+            width: 50px; height: 50px; background: #F8F5EF; border-radius: 8px;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.2), 0 5px 10px rgba(0,0,0,0.3);
+            display: grid; grid-template-columns: repeat(3, 1fr); padding: 6px; gap: 2px;
+        }
+        .dot { background: #1a1a1a; border-radius: 50%; width: 8px; height: 8px; align-self: center; justify-self: center; visibility: hidden; }
+        .die[data-val="1"] .d5, .die[data-val="2"] .d1, .die[data-val="2"] .d9, .die[data-val="3"] .d1, .die[data-val="3"] .d5, .die[data-val="3"] .d9,
+        .die[data-val="4"] .d1, .die[data-val="4"] .d3, .die[data-val="4"] .d7, .die[data-val="4"] .d9,
+        .die[data-val="5"] .d1, .die[data-val="5"] .d3, .die[data-val="5"] .d5, .die[data-val="5"] .d7, .die[data-val="5"] .d9,
+        .die[data-val="6"] .d1, .die[data-val="6"] .d3, .die[data-val="6"] .d4, .die[data-val="6"] .d6, .die[data-val="6"] .d7, .die[data-val="6"] .d9 { visibility: visible; }
+        .die[data-val="1"] .d5 { background: #800020; transform: scale(1.4); }
+
+        .card-bj {
+            width: 64px; height: 90px; 
+            background: #F4F1EA; border: 1px solid #999; border-radius: 6px;
+            display: flex; flex-direction: column; justify-content: space-between; padding: 5px;
+            font-family: var(--font-serif); position: relative;
+            box-shadow: -2px 4px 12px rgba(0,0,0,0.4); transition: transform 0.3s; font-weight: 700;
+        }
+        .card-bj.red { color: #D00000; } 
+        .card-bj.black { color: #111; }
+        .card-bj.gold-border { border: 2px solid var(--color-gold); background: #FFFDF8; }
+        .card-back { 
+            background: repeating-linear-gradient(45deg, #2A2A2E, #2A2A2E 10px, #1A1A1E 10px, #1A1A1E 20px); 
+            border: 2px solid #555; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+        }
+        .card-value-lg { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            font-size: 2rem; opacity: 0.15; 
+        }
+        .card-top-val { font-size: 0.9rem; line-height: 1; }
+        .deal-anim { animation: dealCard 0.4s ease-out forwards; opacity: 0; transform: translateY(-50px); }
+        @keyframes dealCard { to { opacity: 1; transform: translateY(0); } }
+
+        .slot-body {
+            background: linear-gradient(135deg, #2a1b3d 0%, #000000 100%);
+            border: 2px solid var(--color-violet-chrome);
+            box-shadow: 0 0 30px rgba(109, 89, 122, 0.3), inset 0 0 20px rgba(0,0,0,0.8);
+            border-radius: 12px; padding: 20px; position: relative;
+            transform-style: preserve-3d; perspective: 1000px;
+        }
+        .slot-body::before {
+            content: ''; position: absolute; inset: -2px; z-index: -1;
+            background: linear-gradient(45deg, transparent, rgba(209, 178, 124, 0.3), transparent); filter: blur(5px);
+        }
+        .reel-container {
+            display: flex; gap: 10px; justify-content: center;
+            background: #111; padding: 10px; border-radius: 6px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.9); border: 1px solid #333;
+        }
+        .reel-window {
+            width: 70px; height: 120px;
+            background: linear-gradient(to right, #e0e0e0 0%, #F8F5EF 50%, #d6d6d6 100%);
+            border-radius: 4px; overflow: hidden; position: relative;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.4); border: 1px solid #000;
+        }
+        .reel-window::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.7) 100%);
+            pointer-events: none; z-index: 10;
+        }
+        .reel-strip {
+            display: flex; flex-direction: column; align-items: center;
+            transition: transform 0.1s linear; will-change: transform;
+        }
+        .reel-symbol {
+            height: 120px; display: flex; align-items: center; justify-content: center;
+            font-size: 3.5rem; width: 100%; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+        .symbol-7 { font-family: var(--font-serif); color: #6D597A; font-weight: 700; }
+        .symbol-bell { filter: sepia(0.6); }
+        .symbol-star { filter: sepia(0.3) hue-rotate(-10deg); }
+        .symbol-diamond { filter: drop-shadow(0 0 5px cyan); }
+        .symbol-crown { filter: drop-shadow(0 0 5px gold); }
+        .win-line {
+            position: absolute; top: 50%; left: 5%; right: 5%; height: 2px;
+            background: rgba(209, 178, 124, 0.5); z-index: 20; box-shadow: 0 0 5px var(--color-gold);
+            display: none;
+        }
+
+        .rank-row { border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .rank-row:last-child { border: none; }
+        .btn-preset {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            color: #888; border-radius: 4px; padding: 6px 0; font-size: 0.7rem; transition: 0.2s;
+        }
+        .btn-preset:hover { border-color: var(--color-gold); color: var(--color-gold); background: rgba(209,178,124,0.1); }
+        .btn-preset:active { transform: scale(0.95); }
+
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .cal-day {
+            aspect-ratio: 1; border-radius: 4px; font-size: 0.6rem; display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.03); color: #444; position: relative;
+        }
+        .cal-day.win { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.2); }
+        .cal-day.loss { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+        .cal-day.today { border: 1px solid var(--color-gold); box-shadow: 0 0 5px rgba(209,178,124,0.3); }
+
+        #fx-canvas { position: absolute; inset: 0; pointer-events: none; z-index: 9999; }
+        #fx-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 9998; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .fx-screen-shake { animation: screenShake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        .fx-flash-red { animation: redFlash 0.6s ease-out forwards; }
+        .fx-flash-gold { animation: goldFlash 0.8s ease-out forwards; }
+
+        .float-text {
+            position: absolute; font-family: var(--font-serif); font-weight: bold; font-size: 4rem;
+            animation: floatUp 1.5s ease-out forwards; text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            pointer-events: none; z-index: 10000;
+        }
+
+        @keyframes screenShake {
+            10%, 90% { transform: translate3d(-2px, 0, 0) rotate(-1deg); }
+            20%, 80% { transform: translate3d(4px, 0, 0) rotate(2deg); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0) rotate(-2deg); }
+            40%, 60% { transform: translate3d(6px, 0, 0) rotate(1deg); }
+        }
+        @keyframes redFlash {
+            0% { background: rgba(180, 20, 20, 0); }
+            10% { background: rgba(180, 20, 20, 0.4); box-shadow: inset 0 0 100px rgba(0,0,0,0.8); }
+            100% { background: rgba(180, 20, 20, 0); }
+        }
+        @keyframes goldFlash {
+            0% { background: rgba(209, 178, 124, 0); }
+            20% { background: rgba(209, 178, 124, 0.3); box-shadow: inset 0 0 60px rgba(255,215,0,0.5); }
+            100% { background: rgba(209, 178, 124, 0); }
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(50px) scale(0.5); opacity: 0; }
+            20% { transform: translateY(0) scale(1.2); opacity: 1; }
+            100% { transform: translateY(-100px) scale(1); opacity: 0; }
+        }
+
+        .avatar-btn {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: linear-gradient(135deg, #1a1a1e, #0A0A0C);
+            border: 1px solid rgba(209, 178, 124, 0.3);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.3s;
+        }
+        .avatar-btn:hover { border-color: var(--color-gold); box-shadow: 0 0 10px rgba(209,178,124,0.2); transform: scale(1.05); }
+
+        .chat-box { height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 4px; padding: 8px; margin-bottom: 8px; font-size: 0.7rem; border: 1px solid rgba(255,255,255,0.05); }
+        .chat-msg { margin-bottom: 4px; word-wrap: break-word; }
+        .chat-msg span { font-weight: bold; margin-right: 4px; }
+        .player-seat { display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.5; transition: 0.3s; }
+        .player-seat.active { opacity: 1; }
+        .avatar-online { width: 50px; height: 50px; border-radius: 50%; background: #222; border: 2px solid #444; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .avatar-online.p1 { border-color: var(--color-gold); box-shadow: 0 0 10px rgba(209,178,124,0.3); }
+        .avatar-online.p2 { border-color: #B56576; box-shadow: 0 0 10px rgba(181,101,118,0.3); }
+        
+        .bubble-pop { animation: bubblePop 0.3s ease-out; }
+        @keyframes bubblePop { 0% { transform: scale(0.5); opacity: 0; } 80% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+
+        .feed-item {
+            animation: slideInLeft 0.5s ease-out;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .feed-item:last-child { border-bottom: none; }
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .sound-icon-game {
+            width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; border: 1px solid rgba(255,255,255,0.1);
+            color: #666; cursor: pointer; transition: all 0.2s;
+        }
+        .sound-icon-game:hover { color: var(--color-gold); border-color: var(--color-gold); background: rgba(209,178,124,0.1); }
+        .sound-icon-game.muted { color: #333; border-color: rgba(255,255,255,0.05); }
+
+        .bill-overlay {
+            position: fixed; inset: 0; z-index: 100000;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: 0.5s;
+        }
+        .bill-overlay.active { opacity: 1; pointer-events: auto; }
+        .bill-paper {
+            width: 90%; max-width: 360px;
+            background: #111;
+            border: 2px solid var(--color-gold);
+            padding: 24px;
+            box-shadow: 0 0 50px rgba(209, 178, 124, 0.2);
+            position: relative;
+            transform: translateY(50px); transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .bill-overlay.active .bill-paper { transform: translateY(0); }
+        .bill-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.85rem; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 4px; }
+        .bill-row span:last-child { color: white; text-align: right; }
+        .bill-row span:first-child { color: #888; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 1px; }
+        .stamp {
+            position: absolute; bottom: 20px; right: 20px;
+            width: 80px; height: 80px; border: 3px solid #D00000; border-radius: 50%;
+            color: #D00000; display: flex; align-items: center; justify-content: center;
+            font-weight: 900; opacity: 0.6; transform: rotate(-15deg); font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2rem;
+            mask-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxmaWx0ZXIgaWQ9Im5vaXNlIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMC44IiBudW1PY3RhdmVzPSIzIiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsdGVyPSJ1cmwoI25vaXNlKSIgb3BhY2l0eT0iMC41Ii8+PC9zdmc+');
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app" class="relative w-full h-[100dvh] max-w-md mx-auto shadow-2xl overflow-hidden bg-black/50 transition-all duration-200">
+        <canvas id="fx-canvas"></canvas>
+        <div id="fx-overlay"></div>
+        <div id="particles" class="absolute inset-0 pointer-events-none z-0"></div>
+        
+        <div id="bill-modal" class="bill-overlay">
+            <div class="bill-paper">
+                <div class="text-center mb-6">
+                    <h2 class="font-serif text-3xl text-gold italic">Receipt</h2>
+                    <p class="text-[10px] text-gray-500 uppercase tracking-[0.3em]">Hóa đơn giao dịch</p>
+                </div>
+                <div class="space-y-2 font-mono text-gray-300">
+                    <div class="bill-row"><span>Mã GD</span><span id="bill-id">#TX-0000</span></div>
+                    <div class="bill-row"><span>Ngày giờ</span><span id="bill-date">--/--/--</span></div>
+                    <div class="bill-row"><span>Người gửi</span><span id="bill-sender" class="text-gold">---</span></div>
+                    <div class="bill-row"><span>Người nhận</span><span id="bill-receiver" class="text-gold">---</span></div>
+                    <div class="bill-row border-none pt-2"><span>Số tiền</span><span id="bill-amount" class="text-xl font-bold text-white">0</span></div>
+                </div>
+                <div class="mt-2 mb-6 text-center">
+                    <p id="bill-words" class="text-xs text-gray-500 italic font-serif leading-tight">...</p>
+                </div>
+                <button onclick="document.getElementById('bill-modal').classList.remove('active')" class="btn-lux w-full text-xs">ĐÓNG</button>
+                <div class="stamp">PAID</div>
+            </div>
+        </div>
+
+        <section id="view-intro" class="view-section active z-50">
+            <div class="w-full h-full flex flex-col items-center justify-center p-8">
+                <div class="mb-12 text-center animate-fade-in">
+                    <h1 class="font-serif text-5xl italic text-gold tracking-wide">Salon de Jeux</h1>
+                    <p class="font-sans text-xs text-gray-500 mt-2 uppercase tracking-widest">Play for glory, not for money</p>
+                </div>
+
+                <div class="deepglass p-8 rounded-sm w-full max-w-xs transform transition-all">
+                    <p class="font-serif text-xl text-ivory mb-6 italic text-center">"Bienvenue."</p>
+                    <div class="space-y-4 mb-4">
+                        <div><input type="text" id="inp-name" class="input-lux" placeholder="Tên đăng nhập..." autocomplete="off"></div>
+                        <div><input type="password" id="inp-pass" class="input-lux" placeholder="Mật khẩu..." autocomplete="off"></div>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="app.auth.register()" class="btn-lux flex-1 text-xs uppercase tracking-wider">Đăng ký</button>
+                        <button onclick="app.auth.login()" class="btn-lux flex-1 text-xs uppercase tracking-wider">Đăng nhập</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-hall" class="view-section z-10">
+            <div class="flex flex-col h-full p-6">
+                <div class="flex justify-between items-center mb-6 pb-4 border-b border-white/10">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3">
+                             <h2 id="dash-name" class="font-serif text-2xl text-gold italic">Guest</h2>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs text-gray-400 mt-1">
+                            <span class="uppercase tracking-widest">ID: <span id="dash-id">---</span></span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                         <div class="text-right mr-2">
+                            <p class="text-[10px] text-gray-500 uppercase tracking-widest">Balance</p>
+                            <p id="dash-score" class="font-serif text-2xl text-white">$ 0</p>
+                        </div>
+                        <div onclick="app.showProfile()" class="avatar-btn group">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 group-hover:text-gold transition-colors"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto space-y-4 pb-20 no-scrollbar relative">
+                    <div onclick="app.gotoGame('slots')" class="game-card p-6 rounded-lg cursor-pointer group flex flex-col justify-between h-40" style="border-color: rgba(109,89,122,0.3);">
+                        <div>
+                            <div class="flex justify-between items-start">
+                                <h3 class="font-serif text-2xl text-ivory italic group-hover:text-purple-400 transition-colors">L'Amour Slots</h3>
+                                <span class="text-[10px] border border-purple-800 text-purple-300 px-2 py-0.5 rounded uppercase">New</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2 font-sans">Cổ điển • Sang trọng</p>
+                        </div>
+                        <div class="flex justify-end"><span class="text-purple-400 text-sm uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Tourner →</span></div>
+                    </div>
+
+                    <div onclick="app.gotoGame('taixiu')" class="game-card p-6 rounded-lg cursor-pointer group flex flex-col justify-between h-40">
+                        <div>
+                            <div class="flex justify-between items-start">
+                                <h3 class="font-serif text-2xl text-ivory italic group-hover:text-gold transition-colors">Tài Xỉu Solo</h3>
+                                <span class="text-[10px] border border-gold text-gold px-2 py-0.5 rounded uppercase">Popular</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2 font-sans">Sảnh đơn • Tích điểm nhanh</p>
+                        </div>
+                        <div class="flex justify-end"><span class="text-gold text-sm uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Jouer →</span></div>
+                    </div>
+
+                    <div onclick="app.gotoGame('blackjack')" class="game-card p-6 rounded-lg cursor-pointer group flex flex-col justify-between h-40">
+                        <div>
+                            <div class="flex justify-between items-start">
+                                <h3 class="font-serif text-2xl text-ivory italic group-hover:text-gold transition-colors">Blackjack</h3>
+                                <span class="text-[10px] border border-gray-700 text-gray-400 px-2 py-0.5 rounded uppercase">21 Royale</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2 font-sans">1 vs Dealer • Chiến thuật</p>
+                        </div>
+                        <div class="flex justify-end"><span class="text-gold text-sm uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Jouer →</span></div>
+                    </div>
+
+                    <div onclick="app.gotoGame('online')" class="game-card p-6 rounded-lg cursor-pointer group flex flex-col justify-between h-40">
+                        <div>
+                            <div class="flex justify-between items-start">
+                                <h3 class="font-serif text-2xl text-ivory italic group-hover:text-gold transition-colors">Tables en Ligne</h3>
+                                <span class="text-[10px] border border-green-800 text-green-500 px-2 py-0.5 rounded uppercase">PvP</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2 font-sans">Đấu trường • Tạo phòng • Chat</p>
+                        </div>
+                        <div class="flex justify-end"><span class="text-gold text-sm uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Rejoindre →</span></div>
+                    </div>
+
+                    <div class="mt-8 mb-4">
+                         <h3 class="text-[10px] text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                             <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                             Người chơi gần đây
+                         </h3>
+                         <div class="deepglass rounded-lg overflow-hidden">
+                             <div id="live-feed-list" class="flex flex-col">
+                                 <div class="p-4 text-xs text-gray-500 text-center">Đang tải dữ liệu...</div>
+                             </div>
+                         </div>
+                    </div>
+                </div>
+
+                <div class="absolute bottom-6 left-6 right-6 flex justify-between items-center bg-[#0f0f11] p-1 rounded-full border border-white/10 shadow-lg">
+                    <button onclick="app.showLeaderboard()" class="flex-1 py-3 text-center text-xs uppercase tracking-widest text-gray-400 hover:text-gold transition-colors">Classement</button>
+                    <div class="w-px h-4 bg-white/10"></div>
+                    <button onclick="app.logout()" class="flex-1 py-3 text-center text-xs uppercase tracking-widest text-red-900 hover:text-red-500 transition-colors">Sortie</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-profile" class="view-section z-30 bg-[#0E0E10]">
+             <div class="p-6 h-full flex flex-col overflow-y-auto no-scrollbar">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="font-serif text-3xl text-gold italic">Tài Khoản</h2>
+                    <button onclick="app.switchView('view-hall')" class="text-gray-500 hover:text-white text-2xl">&times;</button>
+                </div>
+                
+                <div class="flex gap-2 mb-6 border-b border-white/10 pb-1">
+                    <button onclick="app.profile.switchTab('bank')" id="pf-tab-bank" class="flex-1 py-2 text-xs uppercase tracking-wider text-gold font-bold border-b-2 border-gold">Ngân Hàng</button>
+                    <button onclick="app.profile.switchTab('perf')" id="pf-tab-perf" class="flex-1 py-2 text-xs uppercase tracking-wider text-gray-500">Hiệu Suất</button>
+                </div>
+
+                <!-- BANK TAB -->
+                <div id="pf-content-bank" class="space-y-6">
+                    <div class="deepglass p-6 rounded-lg relative overflow-hidden">
+                        <div class="absolute -top-10 -right-10 w-32 h-32 bg-gold/10 rounded-full blur-2xl"></div>
+                        <p class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Số Dư Khả Dụng</p>
+                        <p id="bank-balance" class="text-3xl font-serif text-white">$ 0</p>
+                    </div>
+
+                    <div class="space-y-4">
+                         <h3 class="text-xs text-gold uppercase tracking-widest">Chuyển Tiền</h3>
+                         <div class="space-y-3">
+                             <div>
+                                 <input type="text" id="tx-receiver" class="input-lux text-left text-sm" placeholder="Tên người nhận (Chính xác)">
+                             </div>
+                             <div>
+                                 <input type="number" id="tx-amount" class="input-lux text-left text-sm" placeholder="Số tiền (VNĐ)">
+                             </div>
+                             <button onclick="app.profile.sendMoney()" class="btn-lux w-full bg-gold/10 border-gold text-gold font-bold hover:bg-gold/20">XÁC NHẬN CHUYỂN</button>
+                         </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-xs text-gray-500 uppercase tracking-widest mb-3">Lịch Sử Giao Dịch</h3>
+                        <div class="deepglass rounded-lg overflow-hidden h-64 overflow-y-auto no-scrollbar" id="tx-history-list">
+                            <div class="p-4 text-center text-xs text-gray-600 italic">Chưa có giao dịch nào</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PERF TAB -->
+                <div id="pf-content-perf" class="space-y-8 hidden">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="deepglass p-4 rounded text-center">
+                            <p class="text-[10px] text-gray-500 uppercase">Total Wins</p>
+                            <p id="stat-wins" class="text-xl text-gold font-serif mt-1">0</p>
+                        </div>
+                         <div class="deepglass p-4 rounded text-center">
+                            <p class="text-[10px] text-gray-500 uppercase">Best Win</p>
+                            <p id="stat-max" class="text-xl text-white font-serif mt-1">$ 0</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-end mb-2">
+                            <h3 class="text-xs uppercase tracking-widest text-gray-500">Today's PNL</h3>
+                            <span id="pnl-today-val" class="font-mono text-sm text-white">$ 0</span>
+                        </div>
+                        <div class="w-full h-56 bg-gradient-to-b from-white/5 to-transparent rounded-lg p-3 border border-white/5 shadow-inner">
+                            <canvas id="pnlChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div>
+                         <div class="flex justify-between items-end mb-4">
+                             <h3 class="text-xs uppercase tracking-widest text-gray-500">30-Day Activity</h3>
+                             <div class="flex gap-2 text-[9px] text-gray-500 uppercase">
+                                 <span class="flex items-center gap-1"><div class="w-2 h-2 bg-green-500/20 border border-green-500/30 rounded-sm"></div> Win</span>
+                                 <span class="flex items-center gap-1"><div class="w-2 h-2 bg-red-500/20 border border-red-500/30 rounded-sm"></div> Loss</span>
+                             </div>
+                         </div>
+                         <div id="pnl-calendar" class="calendar-grid bg-[#121214] p-2 rounded-lg border border-white/5"></div>
+                    </div>
+                </div>
+             </div>
+        </section>
+
+        <!-- (Game Sections: TaiXiu, Slots, Blackjack, Online - Unchanged visually but functionality preserved) -->
+        <section id="view-taixiu" class="view-section z-20">
+            <div class="absolute top-6 right-6 z-30 text-right">
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest">Balance</p>
+                <p class="text-gold font-serif text-xl user-balance-display">$ 0</p>
+            </div>
+            <div class="absolute top-6 left-6 z-30 flex gap-3">
+                <button onclick="app.switchView('view-hall')" class="text-gold font-serif italic hover:opacity-70 text-lg">← Retour</button>
+                <div class="sound-toggle-btn sound-icon-game" onclick="app.audio.toggle()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                </div>
+            </div>
+
+            <div class="w-full h-full flex flex-col items-center p-6 py-12">
+                <h2 class="font-serif text-3xl text-gold italic mt-8">Solo Lounge</h2>
+                <div class="text-xs text-gray-500 uppercase tracking-widest mb-10">4-10 Xỉu • 11-17 Tài • Triple Lose</div>
+
+                <div class="relative w-full flex justify-center items-center h-32 mb-4">
+                    <div id="dice-wrapper" class="flex gap-4 perspective-600">
+                        <div class="die" id="die-1" data-val="1"><div class="dot d5"></div></div>
+                        <div class="die" id="die-2" data-val="2"><div class="dot d1"></div><div class="dot d9"></div></div>
+                        <div class="die" id="die-3" data-val="3"><div class="dot d1"></div><div class="dot d5"></div><div class="dot d9"></div></div>
+                    </div>
+                </div>
+
+                <div id="tx-result" class="h-16 text-center opacity-0 transition-opacity duration-300 mb-4">
+                    <p class="font-serif text-3xl text-white italic" id="tx-msg">Victoire!</p>
+                    <p class="text-xs text-gray-400 font-sans mt-1 uppercase" id="tx-sub">12 Điểm • Tài</p>
+                </div>
+
+                <div class="w-full mt-auto space-y-4">
+                    <div class="w-full max-w-xs mx-auto mb-4 bg-[#151517] p-3 rounded-lg border border-white/10">
+                        <div class="relative mb-3">
+                            <input type="number" id="tx-bet-input" class="input-lux text-center text-2xl font-bold bg-transparent border-none p-0" value="1000">
+                        </div>
+                        <div class="grid grid-cols-5 gap-1">
+                            <button onclick="app.setBet('tx', 100)" class="btn-preset">100</button>
+                            <button onclick="app.setBet('tx', 500)" class="btn-preset">500</button>
+                            <button onclick="app.setBet('tx', 1000)" class="btn-preset">1K</button>
+                            <button onclick="app.setBet('tx', 5000)" class="btn-preset">5K</button>
+                            <button onclick="app.setBet('tx', 'ALL')" class="btn-preset text-gold border-gold/30">ALL</button>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between gap-4">
+                        <button id="btn-xiu" onclick="app.taixiu.select('XIU')" class="btn-lux btn-pill flex-1 border-white/20 text-white/80 hover:border-gold">XỈU <span class="block text-[9px] opacity-50 mt-1">4 — 10</span></button>
+                        <button id="btn-tai" onclick="app.taixiu.select('TAI')" class="btn-lux btn-pill flex-1 border-white/20 text-white/80 hover:border-gold">TÀI <span class="block text-[9px] opacity-50 mt-1">11 — 17</span></button>
+                    </div>
+                    <button id="btn-tx-roll" onclick="app.taixiu.roll()" class="btn-lux w-full bg-gold/10 border-gold text-gold font-bold opacity-0 pointer-events-none transition-opacity">LANCER</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-blackjack" class="view-section z-20">
+            <div class="absolute top-6 right-6 z-30 text-right">
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest">Balance</p>
+                <p class="text-gold font-serif text-xl user-balance-display">$ 0</p>
+            </div>
+            <div class="absolute top-6 left-6 z-30 flex gap-3">
+                <button onclick="app.switchView('view-hall')" class="text-gold font-serif italic hover:opacity-70 text-lg">← Quitter</button>
+                <div class="sound-toggle-btn sound-icon-game" onclick="app.audio.toggle()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                </div>
+            </div>
+
+            <div class="w-full h-full flex flex-col justify-between p-6 bg-[#0E0E10]">
+                <div class="mt-16 text-center">
+                    <div class="flex justify-center items-center gap-2 mb-2">
+                        <p class="text-xs text-gray-500 uppercase tracking-widest">Dealer</p>
+                        <div class="bg-white/10 px-2 py-0.5 rounded text-xs text-gray-300 font-mono opacity-0 transition-opacity" id="bj-dealer-score-box">Tổng: <span id="bj-dealer-score" class="font-bold text-white">0</span></div>
+                    </div>
+                    <div id="bj-dealer-cards" class="flex justify-center gap-2 h-28"></div>
+                </div>
+
+                <div class="text-center h-12 flex items-center justify-center">
+                    <p id="bj-msg" class="font-serif text-3xl text-white italic transition-opacity opacity-0 shadow-black drop-shadow-lg">Blackjack!</p>
+                </div>
+
+                <div class="mb-4 text-center">
+                    <div class="flex justify-center items-center gap-2 mb-2">
+                         <div class="bg-gold/20 border border-gold/30 px-3 py-1 rounded text-sm text-gold font-mono">Tổng: <span id="bj-player-score" class="font-bold text-xl">0</span></div>
+                    </div>
+                    <div id="bj-player-cards" class="flex justify-center gap-2 h-28 mb-6"></div>
+                    <p class="text-xs text-gray-500 uppercase mb-4 tracking-widest">Your Hand</p>
+
+                    <div id="bj-controls-bet" class="w-full">
+                        <div class="w-full max-w-xs mx-auto mb-4 bg-[#151517] p-3 rounded-lg border border-white/10">
+                            <div class="relative mb-3"><input type="number" id="bj-bet-input" class="input-lux text-center text-2xl font-bold bg-transparent border-none p-0" value="500"></div>
+                            <div class="grid grid-cols-5 gap-1">
+                                <button onclick="app.setBet('bj', 100)" class="btn-preset">100</button>
+                                <button onclick="app.setBet('bj', 500)" class="btn-preset">500</button>
+                                <button onclick="app.setBet('bj', 1000)" class="btn-preset">1K</button>
+                                <button onclick="app.setBet('bj', 5000)" class="btn-preset">5K</button>
+                                <button onclick="app.setBet('bj', 'ALL')" class="btn-preset text-gold border-gold/30">ALL</button>
+                            </div>
+                        </div>
+                        <button onclick="app.blackjack.deal()" class="btn-lux w-full border-gold text-gold font-bold">DEAL CARDS</button>
+                    </div>
+                    <div id="bj-controls-play" class="w-full flex gap-4 hidden">
+                        <button onclick="app.blackjack.hit()" class="btn-lux flex-1 border-white/30 text-white hover:border-gold hover:bg-white/5 font-bold">HIT (+)</button>
+                        <button onclick="app.blackjack.stand()" class="btn-lux flex-1 bg-gold/10 border-gold text-gold font-bold shadow-[0_0_15px_rgba(209,178,124,0.2)]">STAND (OK)</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-slots" class="view-section z-20">
+            <div class="absolute top-6 right-6 z-30 text-right">
+                <p class="text-[10px] text-purple-200/50 uppercase tracking-widest">Balance</p>
+                <p class="text-gold font-serif text-xl user-balance-display">$ 0</p>
+            </div>
+            <div class="absolute top-6 left-6 z-30 flex gap-3">
+                <button onclick="app.switchView('view-hall')" class="text-gold font-serif italic hover:opacity-70 text-lg">← Quitter</button>
+                <div class="sound-toggle-btn sound-icon-game" onclick="app.audio.toggle()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                </div>
+            </div>
+
+            <div class="w-full h-full flex flex-col items-center justify-center p-6 bg-[#1a1020]">
+                <h2 class="font-serif text-3xl text-purple-300 italic mb-2">L'Amour Slots</h2>
+                <p class="text-[10px] text-purple-200/50 uppercase tracking-widest mb-10">Machine à sous de luxe</p>
+
+                <div class="slot-body relative mb-4 transform rotate-y-12">
+                    <div class="reel-container">
+                        <div class="win-line"></div>
+                        <div class="reel-window"><div class="reel-strip" id="reel-1"><div class="reel-symbol symbol-7">7</div></div></div>
+                        <div class="reel-window"><div class="reel-strip" id="reel-2"><div class="reel-symbol symbol-7">7</div></div></div>
+                        <div class="reel-window"><div class="reel-strip" id="reel-3"><div class="reel-symbol symbol-7">7</div></div></div>
+                    </div>
+                    <div class="absolute -bottom-6 left-0 right-0 h-4 bg-black/40 blur-lg rounded-[50%]"></div>
+                </div>
+
+                <div id="slot-msg-area" class="h-16 text-center transition-opacity duration-300">
+                    <p class="font-serif text-2xl text-purple-200 italic" id="slot-msg">Prêt?</p>
+                    <p class="text-xs text-purple-400/60 font-sans mt-1 uppercase" id="slot-sub">Spin to Win</p>
+                </div>
+
+                <div class="w-full max-w-xs mt-4">
+                    <div class="w-full max-w-xs mx-auto mb-4 bg-purple-900/20 p-3 rounded-lg border border-purple-500/20">
+                        <div class="relative mb-3"><input type="number" id="slot-bet-input" class="input-lux text-center text-2xl font-bold bg-transparent border-none p-0 text-purple-200" value="100"></div>
+                        <div class="grid grid-cols-5 gap-1">
+                            <button onclick="app.setBet('slot', 50)" class="btn-preset text-purple-300 hover:text-white">50</button>
+                            <button onclick="app.setBet('slot', 100)" class="btn-preset text-purple-300 hover:text-white">100</button>
+                            <button onclick="app.setBet('slot', 500)" class="btn-preset text-purple-300 hover:text-white">500</button>
+                            <button onclick="app.setBet('slot', 1000)" class="btn-preset text-purple-300 hover:text-white">1K</button>
+                            <button onclick="app.setBet('slot', 'ALL')" class="btn-preset text-gold border-gold/30">MAX</button>
+                        </div>
+                    </div>
+                    <button id="btn-spin" onclick="app.slots.spin()" class="btn-lux w-full border-purple-400 text-purple-300 hover:bg-purple-900/20 hover:shadow-[0_0_20px_rgba(157,78,221,0.3)]">TOURNER</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-leaderboard" class="view-section z-30 bg-[#0A0A0C]">
+             <div class="p-6 h-full flex flex-col">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="font-serif text-3xl text-gold italic">Classement</h2>
+                    <button onclick="app.switchView('view-hall')" class="text-gray-500 hover:text-white text-2xl">&times;</button>
+                </div>
+                <div class="flex gap-2 mb-6">
+                    <button onclick="app.leaderboard.switchTab('global')" id="tab-global" class="flex-1 py-2 text-xs uppercase tracking-wider border-b border-gold text-gold">Global</button>
+                    <button onclick="app.leaderboard.switchTab('weekly')" id="tab-weekly" class="flex-1 py-2 text-xs uppercase tracking-wider border-b border-transparent text-gray-500">Weekly</button>
+                    <button onclick="app.leaderboard.switchTab('streak')" id="tab-streak" class="flex-1 py-2 text-xs uppercase tracking-wider border-b border-transparent text-gray-500">Lịch sử</button>
+                </div>
+                <div id="lb-list" class="flex-1 overflow-y-auto deepglass rounded p-4 space-y-3"></div>
+             </div>
+        </section>
+
+        <section id="view-online" class="view-section z-20">
+            <div id="online-wrapper" class="h-full flex flex-col p-6"></div>
+        </section>
+
+    </div>
+
+    <script>
+        const $ = (s) => document.querySelector(s);
+        const $$ = (s) => document.querySelectorAll(s);
+        const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+        function numberToVietnameseText(n) {
+            if (n === 0) return "Không đồng";
+            const dv = ["", "mươi", "trăm", "nghìn", "triệu", "tỷ", "nghìn tỷ", "triệu tỷ"];
+            const cs = ["không", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"];
+            let str = ""; let i = 0;
+            while (n > 0) {
+                let d = n % 1000;
+                if (d > 0) {
+                    let s = "";
+                    let h = Math.floor(d / 100); let c = Math.floor((d % 100) / 10); let u = d % 10;
+                    if (h > 0) s += cs[h] + " trăm "; else if (n > 1000) s += "không trăm ";
+                    if (c > 0) {
+                        s += (c === 1 ? "mười " : cs[c] + " mươi ");
+                        if (u > 0) s += (u === 1 ? "mốt" : u === 5 ? "lăm" : cs[u]);
+                    } else if (u > 0) {
+                        s += (h > 0 || n > 1000 ? "linh " : "") + cs[u];
+                    }
+                    str = s + " " + dv[i + 3] + " " + str;
+                }
+                i++; n = Math.floor(n / 1000);
+            }
+            str = str.replace(/\s+/g, ' ').trim();
+            return str.charAt(0).toUpperCase() + str.slice(1) + " đồng";
+        }
+
+        const app = {
+            user: { name: "", id: "", score: 5000, history: [] },
+            chartInstance: null,
+            fxCanvas: null,
+            fxCtx: null,
+            particles: [],
+            apiBase: "/api",
+            sessionToken: null,
+            
+            audio: {
+                ctx: null,
+                muted: false,
+                init() {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if(AudioContext) this.ctx = new AudioContext();
+                },
+                toggle() {
+                    this.muted = !this.muted;
+                    $$('.sound-toggle-btn').forEach(btn => {
+                        if(this.muted) {
+                            btn.classList.add('muted');
+                            btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>`;
+                        } else {
+                            btn.classList.remove('muted');
+                            btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`;
+                            if(this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+                            this.playClick();
+                        }
+                    });
+                },
+                createOsc(freq, type, startTime, dur, vol = 0.1) {
+                    if(!this.ctx) return;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, startTime);
+                    gain.gain.setValueAtTime(0, startTime);
+                    gain.gain.linearRampToValueAtTime(vol, startTime + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + dur);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(startTime);
+                    osc.stop(startTime + dur + 0.1);
+                    return osc;
+                },
+                createNoise(type, dur, vol) {
+                    if(!this.ctx) return;
+                    const bufferSize = this.ctx.sampleRate * dur;
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+                    const noise = this.ctx.createBufferSource();
+                    noise.buffer = buffer;
+                    const gain = this.ctx.createGain();
+                    const filter = this.ctx.createBiquadFilter();
+                    
+                    if(type === 'pink') {
+                         filter.type = 'lowpass';
+                         filter.frequency.value = 1000;
+                    } else {
+                         filter.type = 'highpass';
+                         filter.frequency.value = 500;
+                    }
+
+                    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + dur);
+                    
+                    noise.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    noise.start();
+                },
+                playWin() {
+                    if(this.muted || !this.ctx) return;
+                    const now = this.ctx.currentTime;
+                    [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
+                        this.createOsc(f, 'sine', now + i*0.08, 1.2, 0.2); 
+                        this.createOsc(f * 2, 'triangle', now + i*0.08, 0.6, 0.05);
+                    });
+                    for(let i=0; i<6; i++) {
+                        setTimeout(() => this.createOsc(2000 + i*300, 'sine', this.ctx.currentTime, 0.1, 0.05), 400 + i*50);
+                    }
+                },
+                playLose() {
+                    if(this.muted || !this.ctx) return;
+                    const now = this.ctx.currentTime;
+                    this.createOsc(146.83, 'triangle', now, 0.6, 0.3);
+                    this.createOsc(103.83, 'triangle', now + 0.4, 0.8, 0.3);
+                },
+                playClick() { 
+                    if(this.muted || !this.ctx) return;
+                    this.createOsc(2000, 'sine', this.ctx.currentTime, 0.05, 0.05);
+                },
+                playRoll() {
+                    if(this.muted || !this.ctx) return;
+                    for(let i=0; i<8; i++) {
+                        setTimeout(() => {
+                            this.createNoise('high', 0.05, 0.2);
+                        }, i * 70 + Math.random()*20);
+                    }
+                },
+                playCard() { 
+                    if(this.muted || !this.ctx) return;
+                    this.createNoise('pink', 0.1, 0.3);
+                },
+                playSlotSpin() {
+                     if(this.muted || !this.ctx) return;
+                     const osc = this.ctx.createOscillator();
+                     const gain = this.ctx.createGain();
+                     osc.type = 'sawtooth';
+                     osc.frequency.setValueAtTime(100, this.ctx.currentTime);
+                     osc.frequency.linearRampToValueAtTime(300, this.ctx.currentTime + 0.3);
+                     
+                     const filter = this.ctx.createBiquadFilter();
+                     filter.type = 'lowpass';
+                     filter.frequency.value = 400;
+
+                     gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                     gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.3);
+
+                     osc.connect(filter);
+                     filter.connect(gain);
+                     gain.connect(this.ctx.destination);
+                     osc.start();
+                     osc.stop(this.ctx.currentTime + 0.3);
+                },
+                playSlotStop() {
+                     if(this.muted || !this.ctx) return;
+                     this.createOsc(150, 'square', this.ctx.currentTime, 0.1, 0.1);
+                }
+            },
+
+            auth: {
+                async register() {
+                    app.audio.playClick();
+                    const nameInput = $('#inp-name');
+                    const passInput = $('#inp-pass');
+                    const name = nameInput ? nameInput.value.trim() : "";
+                    const pass = passInput ? passInput.value.trim() : "";
+                    if(!name || !pass) { alert('Nhập tên và mật khẩu'); return; }
+                    const res = await fetch(app.apiBase + '/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, password: pass })
+                    });
+                    const data = await res.json().catch(() => null);
+                    if(!res.ok || !data || !data.ok) {
+                        alert(data && data.error ? data.error : 'Không đăng ký được, thử tên khác.');
+                        return;
+                    }
+                    app.setUserFromServer(data);
+                    app.switchView('view-hall');
+                },
+                async login() {
+                    app.audio.playClick();
+                    const nameInput = $('#inp-name');
+                    const passInput = $('#inp-pass');
+                    const name = nameInput ? nameInput.value.trim() : "";
+                    const pass = passInput ? passInput.value.trim() : "";
+                    if(!name || !pass) { alert('Nhập tên và mật khẩu'); return; }
+                    const res = await fetch(app.apiBase + '/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, password: pass })
+                    });
+                    const data = await res.json().catch(() => null);
+                    if(!res.ok || !data || !data.ok) {
+                        alert(data && data.error ? data.error : 'Sai tài khoản hoặc mật khẩu.');
+                        return;
+                    }
+                    app.setUserFromServer(data);
+                    app.switchView('view-hall');
+                }
+            },
+            api: {
+                async sendTx(amount, game) {
+                    if(!app.sessionToken) return;
+                    try {
+                        const res = await fetch(app.apiBase + '/tx', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ' + app.sessionToken
+                            },
+                            body: JSON.stringify({ amount, game })
+                        });
+                        return await res.json();
+                    } catch(e) { return null; }
+                },
+                async loadLeaderboard(tab) {
+                    try {
+                        const res = await fetch(app.apiBase + '/leaderboard?tab=' + encodeURIComponent(tab || 'global'));
+                        const data = await res.json();
+                        if(!res.ok || !data || !data.ok) return null;
+                        return data;
+                    } catch(e) { return null; }
+                }
+            },
+
+            async syncData() {
+                if(!app.sessionToken) return;
+                const data = await app.api.sendTx(0, 'SYNC'); 
+                if(data && data.ok) {
+                    if(typeof data.score === 'number') app.user.score = data.score;
+                    if(typeof data.totalWins === 'number') app.user.totalWins = data.totalWins;
+                    if(typeof data.maxWin === 'number') app.user.bestWin = data.maxWin;
+                    app.updateDash();
+                    app.pnl.renderStats();
+                }
+            },
+
+            feed: {
+                async init() {
+                    this.update();
+                    setInterval(() => this.update(), 8000); 
+                },
+
+                async update() {
+                    const data = await app.api.loadLeaderboard('streak');
+                    if(data && data.items && data.items.length > 0) {
+                        const realPlayers = data.items.slice(0, 3); 
+                        this.render(realPlayers);
+                    }
+                },
+
+                render(items) {
+                    const container = $('#live-feed-list');
+                    if(!container) return;
+                    
+                    container.innerHTML = items.map(i => {
+                        const win = i.amount >= 0;
+                        const amountClass = win ? "text-green-400" : "text-red-400";
+                        const sign = win ? "+" : "";
+                        const icon = win ? "↗" : "↘";
+                        const time = "Mới đây"; 
+                        
+                        return `
+                        <div class="feed-item p-3 flex justify-between items-center hover:bg-white/5 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[10px] text-gray-400 font-serif">
+                                    ${i.name.charAt(0)}
+                                </div>
+                                <div>
+                                    <p class="text-xs font-bold text-gray-200">${i.name}</p>
+                                    <p class="text-[9px] text-gray-500 uppercase tracking-wide">${i.game} • ${time}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs font-mono font-bold ${amountClass}">${sign}$ ${Math.abs(i.amount).toLocaleString()}</p>
+                                <p class="text-[9px] text-gray-600">${win ? 'WIN' : 'LOST'} ${icon}</p>
+                            </div>
+                        </div>
+                        `;
+                    }).join('');
+                }
+            },
+
+            profile: {
+                activeTab: 'bank',
+                switchTab(tab) {
+                    app.audio.playClick();
+                    this.activeTab = tab;
+                    $$('[id^="pf-content-"]').forEach(el => el.classList.add('hidden'));
+                    $$('[id^="pf-tab-"]').forEach(el => {
+                        el.className = 'flex-1 py-2 text-xs uppercase tracking-wider text-gray-500';
+                    });
+                    
+                    $(`#pf-content-${tab}`).classList.remove('hidden');
+                    $(`#pf-tab-${tab}`).className = 'flex-1 py-2 text-xs uppercase tracking-wider text-gold font-bold border-b-2 border-gold';
+                    
+                    if (tab === 'bank') this.loadBank();
+                    if (tab === 'perf') app.pnl.render();
+                },
+                async loadBank() {
+                    $('#bank-balance').innerText = '$ ' + app.user.score.toLocaleString();
+                    const res = await fetch(app.apiBase + '/transfer?type=history', {
+                         headers: { 'Authorization': 'Bearer ' + app.sessionToken }
+                    });
+                    const data = await res.json();
+                    const list = $('#tx-history-list');
+                    if(data.ok && data.items && data.items.length > 0) {
+                        list.innerHTML = data.items.map(t => {
+                            const isSend = t.sender_id === app.user.id.replace('U',''); 
+                            const cls = isSend ? "text-red-400" : "text-green-400";
+                            const sign = isSend ? "-" : "+";
+                            const name = isSend ? `To: ${t.receiver_name}` : `From: ${t.sender_name}`;
+                            const date = new Date(t.created_at * 1000).toLocaleString('vi-VN');
+                            return `<div class="flex justify-between items-center py-2 border-b border-white/5 last:border-0"><div><p class="text-xs text-white font-serif">${name}</p><p class="text-[9px] text-gray-500 font-mono">${t.id} • ${date}</p></div><div class="font-mono text-xs ${cls}">${sign}$ ${t.amount.toLocaleString()}</div></div>`;
+                        }).join('');
+                    } else {
+                        list.innerHTML = `<div class="p-4 text-center text-xs text-gray-600 italic">Chưa có giao dịch nào</div>`;
+                    }
+                },
+                async sendMoney() {
+                    app.audio.playClick();
+                    const receiver = $('#tx-receiver').value.trim();
+                    const amount = parseInt($('#tx-amount').value);
+                    if(!receiver || !amount) return alert("Vui lòng nhập đủ thông tin");
+                    
+                    const btn = event.target; btn.disabled = true; btn.innerText = "ĐANG XỬ LÝ...";
+                    
+                    try {
+                        const res = await fetch(app.apiBase + '/transfer', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + app.sessionToken },
+                            body: JSON.stringify({ receiver, amount })
+                        });
+                        const data = await res.json();
+                        
+                        if(data.ok) {
+                            app.user.score = data.newBalance;
+                            app.updateDash();
+                            this.showBill(data);
+                            this.loadBank();
+                            $('#tx-receiver').value = ''; $('#tx-amount').value = '';
+                        } else {
+                            alert(data.error || "Lỗi giao dịch");
+                        }
+                    } catch(e) { alert("Lỗi kết nối"); }
+                    btn.disabled = false; btn.innerText = "XÁC NHẬN CHUYỂN";
+                },
+                showBill(data) {
+                    $('#bill-id').innerText = '#' + data.txId;
+                    $('#bill-date').innerText = new Date(data.date).toLocaleString('vi-VN');
+                    $('#bill-sender').innerText = data.sender;
+                    $('#bill-receiver').innerText = data.receiver;
+                    $('#bill-amount').innerText = '$ ' + data.amount.toLocaleString();
+                    $('#bill-words').innerText = numberToVietnameseText(data.amount) + ".";
+                    
+                    app.audio.playWin();
+                    $('#bill-modal').classList.add('active');
+                }
+            },
+
+            init() {
+                this.loadUser();
+                this.createParticles();
+                this.initFxCanvas();
+                this.audio.init();
+                this.feed.init(); 
+                if(this.user.name) {
+                    $('#inp-name').value = this.user.name;
+                    this.switchView('view-hall');
+                    this.updateDash();
+                }
+                this.online.init();
+                this.animLoop();
+                setInterval(() => this.syncData(), 5000);
+                setInterval(() => this.leaderboard.render(this.leaderboard.activeTab, true), 10000);
+            },
+
+            initFxCanvas() {
+                this.fxCanvas = $('#fx-canvas');
+                this.fxCanvas.width = window.innerWidth;
+                this.fxCanvas.height = window.innerHeight;
+                this.fxCtx = this.fxCanvas.getContext('2d');
+                window.addEventListener('resize', () => {
+                    this.fxCanvas.width = window.innerWidth;
+                    this.fxCanvas.height = window.innerHeight;
+                });
+            },
+
+            setUserFromServer(data) {
+                if(!data || !data.user || !data.token) return;
+                const u = data.user;
+                this.user.name = u.name;
+                this.user.id = 'U' + u.id;
+                this.user.score = u.score;
+                this.user.history = Array.isArray(u.history) ? u.history : [];
+                this.user.totalWins = typeof u.totalWins === 'number' ? u.totalWins : 0;
+                this.user.bestWin = typeof u.bestWin === 'number' ? u.bestWin : 0;
+                this.sessionToken = data.token;
+                this.saveUser();
+            },
+
+            switchView(id) {
+                app.audio.playClick();
+                $$('.view-section').forEach(el => {
+                    el.classList.remove('active');
+                    el.style.pointerEvents = 'none';
+                });
+                
+                setTimeout(() => {
+                    $(`#${id}`).classList.add('active');
+                    $(`#${id}`).style.pointerEvents = 'auto';
+                }, 100); 
+            },
+
+            logout() {
+                app.audio.playClick();
+                if(confirm("Exit Salon?")) {
+                    localStorage.removeItem('salon_user');
+                    location.reload();
+                }
+            },
+
+            updateDash() {
+                $('#dash-name').textContent = this.user.name;
+                $('#dash-id').textContent = this.user.id;
+                const scoreStr = '$ ' + this.user.score.toLocaleString();
+                $('#dash-score').textContent = scoreStr;
+                $$('.user-balance-display').forEach(el => el.textContent = scoreStr);
+            },
+
+            saveUser() {
+                const payload = { user: this.user, token: this.sessionToken };
+                localStorage.setItem('salon_user', JSON.stringify(payload));
+                this.updateDash();
+            },
+
+            loadUser() {
+                const data = localStorage.getItem('salon_user');
+                if(data) {
+                    try {
+                        const obj = JSON.parse(data);
+                        if(obj && obj.user) {
+                            this.user = obj.user;
+                            this.sessionToken = obj.token || null;
+                        } else {
+                            this.user = obj;
+                        }
+                    } catch(e) {}
+                    if(!this.user.history) this.user.history = [];
+                }
+            },
+
+            recordTx(amount, game) {
+                this.user.score += amount;
+                this.user.history.push({ date: Date.now(), amount: amount, game: game });
+                if(this.user.history.length > 200) this.user.history.shift();
+                this.saveUser();
+                this.api.sendTx(amount, game);
+                
+                if(amount > 0) this.triggerWinFx(amount);
+                else if(amount < 0) this.triggerLoseFx(amount);
+            },
+
+            triggerWinFx(amount) {
+                app.audio.playWin();
+                const overlay = $('#fx-overlay');
+                overlay.className = 'fx-flash-gold absolute inset-0 z-[9998] flex items-center justify-center';
+                const text = document.createElement('div');
+                text.className = 'float-text text-gold';
+                text.innerText = `+$ ${amount.toLocaleString()}`;
+                overlay.appendChild(text);
+                this.spawnConfetti();
+                setTimeout(() => {
+                    overlay.className = 'absolute inset-0 z-[9998] flex items-center justify-center pointer-events-none';
+                    if(text.parentNode) text.parentNode.removeChild(text);
+                }, 1000);
+            },
+
+            triggerLoseFx(amount) {
+                app.audio.playLose();
+                const appEl = $('#app');
+                const overlay = $('#fx-overlay');
+                appEl.classList.remove('fx-screen-shake');
+                void appEl.offsetWidth; 
+                appEl.classList.add('fx-screen-shake');
+                overlay.className = 'fx-flash-red absolute inset-0 z-[9998] flex items-center justify-center';
+                const text = document.createElement('div');
+                text.className = 'float-text text-red-500';
+                text.innerText = `$ ${amount.toLocaleString()}`;
+                overlay.appendChild(text);
+                setTimeout(() => {
+                    overlay.className = 'absolute inset-0 z-[9998] flex items-center justify-center pointer-events-none';
+                    if(text.parentNode) text.parentNode.removeChild(text);
+                    appEl.classList.remove('fx-screen-shake');
+                }, 1000);
+            },
+
+            spawnConfetti() {
+                const colors = ['#D1B27C', '#F8F5EF', '#FFD700', '#FFFFFF'];
+                for(let i=0; i<100; i++) {
+                    this.particles.push({
+                        x: window.innerWidth / 2, y: window.innerHeight / 2,
+                        vx: (Math.random() - 0.5) * 15, vy: (Math.random() - 0.5) * 15,
+                        size: Math.random() * 8 + 4, color: colors[Math.floor(Math.random()*colors.length)],
+                        rotation: Math.random() * 360, rotationSpeed: (Math.random() - 0.5) * 10,
+                        life: 1.5, gravity: 0.2
+                    });
+                }
+            },
+
+            animLoop() {
+                const ctx = this.fxCtx;
+                if(ctx) {
+                    ctx.clearRect(0, 0, this.fxCanvas.width, this.fxCanvas.height);
+                    for(let i = this.particles.length - 1; i >= 0; i--) {
+                        let p = this.particles[i];
+                        p.x += p.vx; p.y += p.vy; p.vy += p.gravity || 0; p.vx *= 0.95; 
+                        p.rotation += p.rotationSpeed; p.life -= 0.015;
+                        if(p.life <= 0) { this.particles.splice(i, 1); continue; }
+                        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rotation * Math.PI / 180);
+                        ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
+                        ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size); ctx.restore();
+                    }
+                }
+                requestAnimationFrame(() => this.animLoop());
+            },
+
+            gotoGame(type) {
+                app.audio.playClick();
+                if(type === 'taixiu') { this.taixiu.reset(); this.switchView('view-taixiu'); } 
+                else if(type === 'blackjack') { this.blackjack.reset(); this.switchView('view-blackjack'); } 
+                else if(type === 'slots') { this.slots.reset(); this.switchView('view-slots'); } 
+                else if(type === 'online') { this.online.renderLobby(); this.switchView('view-online'); }
+            },
+
+            showProfile() {
+                app.audio.playClick();
+                app.profile.switchTab('bank');
+                this.switchView('view-profile');
+            },
+
+            pnl: {
+                render() { this.renderChart(); this.renderCalendar(); this.renderStats(); },
+                renderChart() {
+                    if(app.chartInstance) app.chartInstance.destroy();
+                    const ctx = $('#pnlChart').getContext('2d');
+                    const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
+                    let running = 0; let todayTotal = 0;
+                    const data = [{x: 'Start', y: 0}];
+                    app.user.history.forEach(tx => {
+                        if(tx.date >= startOfDay.getTime()) {
+                            running += tx.amount; todayTotal += tx.amount;
+                            data.push({ x: new Date(tx.date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), y: running });
+                        }
+                    });
+                    $('#pnl-today-val').innerText = (todayTotal>=0?'+':'') + '$ ' + todayTotal.toLocaleString();
+                    $('#pnl-today-val').className = `font-mono text-sm ${todayTotal>=0?'text-green-400':'text-red-400'}`;
+                    const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+                    gradient.addColorStop(0, 'rgba(209, 178, 124, 0.4)'); gradient.addColorStop(1, 'rgba(209, 178, 124, 0)');
+                    app.chartInstance = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.map(d=>d.x),
+                            datasets: [{
+                                label: 'PNL', data: data.map(d=>d.y), borderColor: '#D1B27C', borderWidth: 2,
+                                backgroundColor: gradient, fill: true, pointBackgroundColor: '#F8F5EF', pointBorderColor: '#D1B27C', pointRadius: 3, tension: 0.4 
+                            }]
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            plugins: { legend: {display: false}, tooltip: { mode: 'index', intersect: false } },
+                            scales: { x: { display: false }, y: { grid: {color:'rgba(255,255,255,0.05)', drawBorder: false}, ticks: {color:'#666', font: {size: 10}} } },
+                            interaction: { mode: 'nearest', axis: 'x', intersect: false }
+                        }
+                    });
+                },
+                renderCalendar() {
+                    const el = $('#pnl-calendar'); el.innerHTML = '';
+                    const daily = {}; const now = new Date();
+                    for(let i=29; i>=0; i--) { const d = new Date(now); d.setDate(d.getDate() - i); daily[d.toISOString().split('T')[0]] = 0; }
+                    app.user.history.forEach(tx => { const k = new Date(tx.date).toISOString().split('T')[0]; if(daily[k] !== undefined) daily[k] += tx.amount; });
+                    Object.keys(daily).sort().forEach(k => {
+                        const div = document.createElement('div'); const dayNum = k.split('-')[2]; div.className = 'cal-day';
+                        if(k === now.toISOString().split('T')[0]) div.classList.add('today');
+                        if(daily[k] > 0) div.classList.add('win'); if(daily[k] < 0) div.classList.add('loss');
+                        div.innerText = dayNum; if(daily[k] !== 0) div.title = `${daily[k] > 0 ? '+' : ''}$ ${daily[k].toLocaleString()}`;
+                        el.appendChild(div);
+                    });
+                },
+                renderStats() {
+                    const wins = (typeof app.user.totalWins === 'number') ? app.user.totalWins : app.user.history.filter(t => t.amount > 0).length;
+                    const max = (typeof app.user.bestWin === 'number') ? app.user.bestWin : app.user.history.reduce((m,t) => Math.max(m, t.amount), 0);
+                    $('#stat-wins').innerText = wins; $('#stat-max').innerText = '$ ' + max.toLocaleString();
+                }
+            },
+
+            setBet(game, val) {
+                app.audio.playClick();
+                const el = $(`#${game}-bet-input`);
+                if(val === 'ALL') el.value = app.user.score; else el.value = val;
+            },
+
+            showLeaderboard() {
+                app.audio.playClick();
+                this.leaderboard.render('global');
+                this.switchView('view-leaderboard');
+            },
+
+            checkBalance(bet) {
+                if(isNaN(bet) || bet <= 0) { alert("Cược không hợp lệ!"); return false; }
+                if(bet > this.user.score) { alert("Không đủ điểm!"); return false; }
+                return true;
+            },
+
+            taixiu: {
+                selected: null, isRolling: false,
+                reset() {
+                    this.selected = null; this.isRolling = false;
+                    $('#btn-xiu').classList.remove('btn-selected'); $('#btn-tai').classList.remove('btn-selected');
+                    $('#btn-tx-roll').classList.add('opacity-0', 'pointer-events-none'); $('#tx-result').classList.add('opacity-0');
+                    $('#tx-bet-input').disabled = false;
+                },
+                select(opt) {
+                    app.audio.playClick();
+                    if(this.isRolling) return;
+                    this.selected = opt;
+                    if(opt === 'XIU') { $('#btn-xiu').classList.add('btn-selected'); $('#btn-tai').classList.remove('btn-selected'); } 
+                    else { $('#btn-tai').classList.add('btn-selected'); $('#btn-xiu').classList.remove('btn-selected'); }
+                    $('#btn-tx-roll').classList.remove('opacity-0', 'pointer-events-none');
+                },
+                async roll() {
+                    const bet = parseInt($('#tx-bet-input').value);
+                    if(!app.checkBalance(bet)) return;
+                    this.isRolling = true; $('#tx-bet-input').disabled = true;
+                    $('#btn-tx-roll').classList.add('opacity-50', 'pointer-events-none');
+                    $('#dice-wrapper').classList.add('shaking');
+                    app.audio.playRoll();
+                    await sleep(1200);
+                    const d1 = Math.ceil(Math.random()*6); const d2 = Math.ceil(Math.random()*6); const d3 = Math.ceil(Math.random()*6);
+                    const total = d1+d2+d3;
+                    $('#dice-wrapper').classList.remove('shaking');
+                    const renderDie = (id, val) => {
+                        const el = $(`#die-${id}`); el.dataset.val = val; el.innerHTML = ''; 
+                        const map = { 1:['d5'], 2:['d1','d9'], 3:['d1','d5','d9'], 4:['d1','d3','d7','d9'], 5:['d1','d3','d5','d7','d9'], 6:['d1','d3','d4','d6','d7','d9'] };
+                        map[val].forEach(c => el.innerHTML += `<div class="dot ${c}"></div>`);
+                    };
+                    renderDie(1, d1); renderDie(2, d2); renderDie(3, d3);
+                    let win = false; let change = 0; let type = '';
+                    if(d1===d2 && d2===d3) { type = 'BÃO (TRIPLE)'; change = -bet; } 
+                    else if(total >= 4 && total <= 10) { type = 'XỈU'; win = (this.selected === 'XIU'); change = win ? bet : -bet; } 
+                    else { type = 'TÀI'; win = (this.selected === 'TAI'); change = win ? bet : -bet; }
+                    app.recordTx(change, 'Tai Xiu');
+                    const msgColor = win ? 'text-gold' : 'text-red-500';
+                    const msgText = win ? `+$ ${bet.toLocaleString()}` : `-$ ${bet.toLocaleString()}`;
+                    $('#tx-msg').className = `font-serif text-3xl italic ${msgColor}`;
+                    $('#tx-msg').innerText = win ? "Victoire!" : "Perdu...";
+                    $('#tx-sub').innerText = `${total} Điểm • ${type} • ${msgText}`;
+                    $('#tx-result').classList.remove('opacity-0');
+                    setTimeout(() => {
+                        this.isRolling = false; $('#tx-bet-input').disabled = false;
+                        $('#btn-tx-roll').classList.remove('opacity-50'); $('#btn-tx-roll').classList.add('opacity-0', 'pointer-events-none');
+                        $('#btn-xiu').classList.remove('btn-selected'); $('#btn-tai').classList.remove('btn-selected');
+                        this.selected = null;
+                    }, 2500);
+                }
+            },
+
+            blackjack: {
+                deck: [], playerHand: [], dealerHand: [], gameState: 'BET', currentBet: 0,
+                suits: ['♥', '♦', '♣', '♠'], values: ['2','3','4','5','6','7','8','9','10','J','Q','K','A'],
+                createDeck() {
+                    let d = [];
+                    for(let s of this.suits) for(let v of this.values) d.push({ suit: s, val: v, color: (s==='♥'||s==='♦') ? 'red' : 'black' });
+                    return d.sort(() => Math.random() - 0.5);
+                },
+                getScore(hand) {
+                    let score = 0; let aces = 0;
+                    for(let c of hand) {
+                        if(['J','Q','K'].includes(c.val)) score += 10;
+                        else if(c.val === 'A') { score += 11; aces++; }
+                        else score += parseInt(c.val);
+                    }
+                    while(score > 21 && aces > 0) { score -= 10; aces--; }
+                    return score;
+                },
+                renderCard(card, hidden=false) {
+                    if(hidden) return `<div class="card-bj card-back deal-anim"></div>`;
+                    return `<div class="card-bj ${card.color} ${['J','Q','K','A'].includes(card.val) ? 'gold-border' : ''} deal-anim"><div class="card-top-val">${card.val}<br>${card.suit}</div><div class="card-value-lg">${card.suit}</div><div class="card-top-val self-end rotate-180">${card.val}<br>${card.suit}</div></div>`;
+                },
+                reset() {
+                    $('#bj-dealer-cards').innerHTML = ''; $('#bj-player-cards').innerHTML = '';
+                    $('#bj-player-score').innerText = '0'; $('#bj-dealer-score').innerText = '0';
+                    $('#bj-dealer-score-box').classList.add('opacity-0'); $('#bj-msg').classList.add('opacity-0');
+                    $('#bj-controls-bet').classList.remove('hidden'); $('#bj-controls-play').classList.add('hidden');
+                    this.gameState = 'BET';
+                },
+                async deal() {
+                    const bet = parseInt($('#bj-bet-input').value);
+                    if(!app.checkBalance(bet)) return;
+                    this.currentBet = bet; this.deck = this.createDeck();
+                    this.playerHand = [this.deck.pop(), this.deck.pop()]; this.dealerHand = [this.deck.pop(), this.deck.pop()];
+                    this.gameState = 'PLAY';
+                    $('#bj-controls-bet').classList.add('hidden'); $('#bj-controls-play').classList.remove('hidden');
+                    app.audio.playCard();
+                    this.renderHands(true);
+                    if(this.getScore(this.playerHand) === 21) this.endGame();
+                },
+                hit() {
+                    this.playerHand.push(this.deck.pop()); app.audio.playCard(); this.renderHands(true);
+                    if(this.getScore(this.playerHand) > 21) this.endGame();
+                },
+                async stand() {
+                    while(this.getScore(this.dealerHand) < 17) { await sleep(500); this.dealerHand.push(this.deck.pop()); app.audio.playCard(); this.renderHands(false); }
+                    this.endGame();
+                },
+                renderHands(hideDealer) {
+                    $('#bj-player-cards').innerHTML = this.playerHand.map(c => this.renderCard(c)).join('');
+                    $('#bj-player-score').innerText = this.getScore(this.playerHand);
+                    if(hideDealer && this.gameState === 'PLAY') {
+                         $('#bj-dealer-cards').innerHTML = this.renderCard(this.dealerHand[0]) + this.renderCard(null, true);
+                         $('#bj-dealer-score').innerText = '?'; $('#bj-dealer-score-box').classList.remove('opacity-0');
+                    } else {
+                        $('#bj-dealer-cards').innerHTML = this.dealerHand.map(c => this.renderCard(c)).join('');
+                        $('#bj-dealer-score').innerText = this.getScore(this.dealerHand); $('#bj-dealer-score-box').classList.remove('opacity-0');
+                    }
+                },
+                endGame() {
+                    this.gameState = 'OVER'; this.renderHands(false); $('#bj-controls-play').classList.add('hidden');
+                    const pScore = this.getScore(this.playerHand); const dScore = this.getScore(this.dealerHand);
+                    let result = ''; let points = 0; let bet = this.currentBet;
+                    if(pScore > 21) { result = 'Busted!'; points = -bet; }
+                    else if(dScore > 21) { result = 'Dealer Busted!'; points = bet; }
+                    else if(pScore > dScore) { 
+                        if (pScore == 21 && this.playerHand.length == 2) { result = 'Blackjack!'; points = Math.floor(bet * 1.5); } 
+                        else { result = 'Victoire!'; points = bet; }
+                    }
+                    else if(pScore < dScore) { result = 'Perdu...'; points = -bet; }
+                    else { result = 'Push (Hòa)'; points = 0; }
+                    app.recordTx(points, 'Blackjack');
+                    const msgEl = $('#bj-msg');
+                    msgEl.innerText = `${result} (${points >= 0 ? '+' : ''}$ ${Math.abs(points)})`;
+                    msgEl.className = `font-serif text-3xl italic transition-opacity ${points > 0 ? 'text-gold' : 'text-red-500'}`;
+                    msgEl.classList.remove('opacity-0');
+                    setTimeout(() => { this.reset(); }, 3000);
+                }
+            },
+
+            slots: {
+                isSpinning: false,
+                symbols: [
+                    { id: '7', char: '7', class: 'symbol-7' }, { id: 'diamond', char: '💎', class: 'symbol-diamond' },
+                    { id: 'crown', char: '👑', class: 'symbol-crown' }, { id: 'grape', char: '🍇', class: 'symbol-grape' },
+                    { id: 'bell', char: '🔔', class: 'symbol-bell' }, { id: 'cherry', char: '🍒', class: 'symbol-cherry' },
+                    { id: 'star', char: '⭐', class: 'symbol-star' }, { id: 'lemon', char: '🍋', class: 'symbol-lemon' }
+                ],
+                reset() {
+                    this.isSpinning = false;
+                    $('#slot-msg').innerText = "Prêt?"; $('#slot-msg').className = "font-serif text-2xl text-purple-200 italic";
+                    $('#slot-sub').innerText = "Spin to Win"; $('.win-line').style.display = 'none'; $('#slot-bet-input').disabled = false;
+                },
+                async spin() {
+                    if(this.isSpinning) return;
+                    const bet = parseInt($('#slot-bet-input').value);
+                    if(!app.checkBalance(bet)) return;
+                    this.isSpinning = true; $('.win-line').style.display = 'none';
+                    $('#btn-spin').disabled = true; $('#slot-bet-input').disabled = true;
+                    
+                    const reels = [$('#reel-1'), $('#reel-2'), $('#reel-3')]; const results = [];
+                    
+                    for(let i=0; i<3; i++) {
+                         setTimeout(() => app.audio.playSlotSpin(), i * 150);
+                    }
+
+                    reels.forEach(r => {
+                        r.innerHTML = ''; 
+                        for(let i=0; i<20; i++) {
+                            const randSym = this.symbols[Math.floor(Math.random() * this.symbols.length)];
+                            const div = document.createElement('div'); div.className = `reel-symbol ${randSym.class}`; div.innerText = randSym.char;
+                            r.appendChild(div);
+                        }
+                    });
+                    reels.forEach(r => r.style.transform = `translateY(0px)`); await sleep(50);
+                    reels.forEach((r, i) => {
+                        r.style.transition = `transform ${1.5 + i*0.5}s cubic-bezier(0.1, 0.1, 0.1, 1)`;
+                        const h = 120; const stopIndex = Math.floor(Math.random() * 15) + 2; 
+                        const finalSym = r.children[stopIndex]; results[i] = { char: finalSym.innerText, type: finalSym.className };
+                        const moveY = - (stopIndex * h); 
+                        r.style.transform = `translateY(${moveY}px)`;
+                        setTimeout(() => app.audio.playSlotStop(), (1500 + i*500) - 200);
+                    });
+                    await sleep(2700);
+                    this.checkWin(results, bet);
+                    this.isSpinning = false; $('#btn-spin').disabled = false; $('#slot-bet-input').disabled = false;
+                },
+                checkWin(res, bet) {
+                    const c1 = res[0].char; const c2 = res[1].char; const c3 = res[2].char;
+                    let win = false; let points = -bet; let msg = "Try Again";
+                    if(c1 === '7' && c2 === '7' && c3 === '7') { win = true; points = bet * 50; msg = "JACKPOT! (x50)"; } 
+                    else if(c1 === '💎' && c2 === '💎' && c3 === '💎') { win = true; points = bet * 30; msg = "DIAMOND! (x30)"; } 
+                    else if(c1 === '👑' && c2 === '👑' && c3 === '👑') { win = true; points = bet * 20; msg = "ROYAL! (x20)"; } 
+                    else if(c1 === c2 && c2 === c3) { win = true; points = bet * 10; msg = "Big Win! (x10)"; } 
+                    else if(c1 === c2 || c2 === c3 || c1 === c3) { win = true; points = Math.floor(bet * 1.5); msg = "Petit Win (x1.5)"; } 
+                    else { msg = "Nothing..."; }
+                    app.recordTx(points, 'Slots');
+                    $('#slot-msg').innerText = msg;
+                    $('#slot-msg').className = win ? "font-serif text-3xl text-gold italic animate-bounce" : "font-serif text-2xl text-gray-500 italic";
+                    $('#slot-sub').innerText = win ? `+$ ${points.toLocaleString()} Points` : `-$ ${bet.toLocaleString()} Points`;
+                    if(win && points > bet * 5) $('.win-line').style.display = 'block';
+                }
+            },
+
+            leaderboard: {
+                activeTab: 'global',
+                async render(tab, silent = false) { 
+                    this.activeTab = tab;
+                    $$('#view-leaderboard button[id^="tab-"]').forEach(b => {
+                        b.classList.remove('border-gold', 'text-gold');
+                        b.classList.add('border-transparent', 'text-gray-500');
+                    });
+                    $(`#tab-${tab}`).classList.remove('border-transparent', 'text-gray-500');
+                    $(`#tab-${tab}`).classList.add('border-gold', 'text-gold');
+                    
+                    const container = $('#lb-list');
+                    const data = await app.api.loadLeaderboard(tab);
+                    if(!data || !data.items) return;
+                    
+                    const currentScroll = container.scrollTop;
+                    
+                    if(tab === 'streak') {
+                        container.innerHTML = '';
+                        data.items.forEach(item => {
+                            const sign = item.amount >= 0 ? '+' : '';
+                            const cls = item.amount >= 0 ? 'text-gold' : 'text-red-400';
+                            const row = `<div class="flex justify-between items-center py-3 text-ivory text-sm"><div class="flex flex-col"><span class="font-serif">${item.name}</span><span class="text-xs text-gray-500">${item.game}</span></div><div class="text-right"><span class="font-mono ${cls}">${sign}$ ${item.amount.toLocaleString()}</span></div></div>`;
+                            container.innerHTML += row;
+                        });
+                    } else {
+                        const list = data.items; container.innerHTML = '';
+                        list.forEach((u, idx) => {
+                            let rankIcon = `<span class="text-gray-600 font-mono w-6 text-center">${idx+1}</span>`;
+                            let rowClass = "text-ivory";
+                            if(idx === 0) { rankIcon = '✦'; rowClass = "text-gold font-bold"; }
+                            else if(idx === 1) { rankIcon = '★'; rowClass = "text-yellow-100"; }
+                            else if(idx === 2) { rankIcon = '◆'; rowClass = "text-gray-300"; }
+                            const html = `<div class="rank-row flex justify-between items-center py-3"><div class="flex items-center gap-3"><span class="rank-icon ${idx < 3 ? 'text-gold' : ''}">${rankIcon}</span><span class="${rowClass} font-serif">${u.name}</span></div><span class="font-mono text-sm ${rowClass}">$ ${u.score.toLocaleString()}</span></div>`;
+                            container.innerHTML += html;
+                        });
+                    }
+                    container.scrollTop = currentScroll;
+                },
+                switchTab(tab) { 
+                    app.audio.playClick(); 
+                    $('#lb-list').innerHTML = '<div class="text-xs text-gray-500 py-4">Đang tải...</div>'; 
+                    this.render(tab); 
+                }
+            },
+            
+            online: {
+                activeRoom: null,
+                rooms: [ { id: '101', name: "Sòng Đại Gia", game: "TaiXiu", bet: 5000, players: 1 }, { id: '102', name: "Vui Vẻ 1", game: "TaiXiu", bet: 100, players: 1 }, { id: '103', name: "Slots Race", game: "Slots", bet: 500, players: 1 }, { id: '104', name: "PvP High Roller", game: "TaiXiu", bet: 10000, players: 1 } ],
+                chatLog: [], botNames: ["Minh Long", "Sarah", "Đức Anh", "Bảo Ngọc", "Tommy", "Huyền My"],
+                init() {},
+                renderLobby() {
+                    const wrap = $('#online-wrapper');
+                    wrap.innerHTML = `<div class="flex items-center gap-3 mb-6"><button onclick="app.switchView('view-hall')" class="text-gold font-serif italic w-20">← Retour</button><div class="sound-toggle-btn sound-icon-game" onclick="app.audio.toggle()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg></div></div><h2 class="font-serif text-3xl text-white italic mb-2">Online Lobby</h2><div class="flex justify-between items-center mb-6"><p class="text-xs text-gray-500">Chọn phòng hoặc tạo phòng mới.</p><span class="text-xs text-gold border border-gold px-2 py-1 rounded">$ ${app.user.score.toLocaleString()}</span></div><div id="room-list" class="flex-1 overflow-y-auto space-y-3 pb-20 no-scrollbar">${this.rooms.map(r => `<div onclick="app.online.joinRoom('${r.id}')" class="deepglass p-4 rounded flex justify-between items-center cursor-pointer hover:border-gold transition-colors group"><div><div class="flex items-center gap-2"><p class="text-white font-bold group-hover:text-gold">${r.name}</p><span class="text-[9px] bg-white/10 px-1 rounded text-gray-400">${r.game}</span></div><p class="text-xs text-gray-500 mt-1">Bet: <span class="text-gold">$ ${r.bet.toLocaleString()}</span> • ${r.players}/2</p></div><button class="btn-lux py-1 px-3 text-[10px] border-white/20 text-gray-400 group-hover:border-gold group-hover:text-gold">Vào</button></div>`).join('')}</div><div class="mt-auto pt-4"><button onclick="app.online.showCreateModal()" class="btn-lux w-full text-gold border-gold bg-gold/5">+ TẠO PHÒNG MỚI</button></div>`;
+                },
+                showCreateModal() {
+                    const wrap = $('#online-wrapper');
+                    wrap.innerHTML = `<button onclick="app.online.renderLobby()" class="text-gold font-serif italic mb-6">← Hủy</button><h2 class="font-serif text-3xl text-white italic mb-8">Tạo Phòng</h2><div class="space-y-6"><div><label class="text-xs text-gray-500 uppercase block mb-2">Tên Phòng</label><input id="new-room-name" type="text" class="input-lux text-left" value="${app.user.name}'s Room"></div><div><label class="text-xs text-gray-500 uppercase block mb-2">Chế Độ Chơi</label><div class="flex gap-2"><button onclick="app.online.selectMode('TaiXiu')" id="sel-mode-tx" class="btn-lux flex-1 btn-selected">TÀI XỈU</button><button onclick="app.online.selectMode('Slots')" id="sel-mode-sl" class="btn-lux flex-1 border-white/20 text-gray-400">SLOTS</button></div></div><div><label class="text-xs text-gray-500 uppercase block mb-2">Mức Cược</label><input id="new-room-bet" type="number" class="input-lux" value="1000"><div class="flex justify-between mt-2"><button onclick="$('#new-room-bet').value=100" class="text-[10px] text-gray-500 hover:text-white">100</button><button onclick="$('#new-room-bet').value=1000" class="text-[10px] text-gray-500 hover:text-white">1K</button><button onclick="$('#new-room-bet').value=5000" class="text-[10px] text-gray-500 hover:text-white">5K</button><button onclick="$('#new-room-bet').value=10000" class="text-[10px] text-gray-500 hover:text-white">10K</button></div></div></div><div class="mt-auto pt-8"><button onclick="app.online.confirmCreate()" class="btn-lux w-full bg-gold text-black font-bold border-gold hover:bg-white">BẮT ĐẦU</button></div>`;
+                    this.tempMode = 'TaiXiu';
+                },
+                selectMode(m) {
+                    app.audio.playClick(); this.tempMode = m;
+                    $('#sel-mode-tx').className = m==='TaiXiu' ? 'btn-lux flex-1 btn-selected' : 'btn-lux flex-1 border-white/20 text-gray-400';
+                    $('#sel-mode-sl').className = m==='Slots' ? 'btn-lux flex-1 btn-selected' : 'btn-lux flex-1 border-white/20 text-gray-400';
+                },
+                confirmCreate() {
+                    app.audio.playClick();
+                    const name = $('#new-room-name').value; const bet = parseInt($('#new-room-bet').value); const id = Math.floor(Math.random()*9000+1000).toString();
+                    if(!name || isNaN(bet) || bet < 100) return alert("Vui lòng kiểm tra lại thông tin!");
+                    if(bet > app.user.score) return alert("Không đủ tiền cược!");
+                    const newRoom = { id, name, game: this.tempMode, bet, players: 1, isHost: true };
+                    this.rooms.unshift(newRoom); this.joinRoom(id);
+                },
+                joinRoom(id) {
+                    app.audio.playClick();
+                    this.activeRoom = this.rooms.find(r => r.id === id); if(!this.activeRoom) return;
+                    this.chatLog = [{u: 'System', m: `Chào mừng đến ${this.activeRoom.name}!`}];
+                    this.botName = this.botNames[Math.floor(Math.random() * this.botNames.length)];
+                    this.renderRoom();
+                    if(this.activeRoom.players < 2) {
+                        setTimeout(() => {
+                            this.activeRoom.players = 2; this.addChat(this.botName, "Hello! Solo không?"); this.renderRoom();
+                            if(this.activeRoom.game === 'TaiXiu') this.startTaiXiuRound();
+                        }, 2000);
+                    }
+                },
+                renderRoom() {
+                    const r = this.activeRoom; const wrap = $('#online-wrapper'); let gameHtml = '';
+                    if(r.game === 'TaiXiu') {
+                        gameHtml = `<div class="flex-1 flex flex-col items-center justify-center relative mb-4"><div class="absolute top-0 w-full flex justify-between text-[10px] text-gray-500 uppercase tracking-widest"><span>P1: ${app.user.name}</span><span>P2: ${this.botName}</span></div><div id="pvp-dice" class="flex gap-2 p-4 deepglass rounded-lg mb-4 transition-transform"><div class="w-8 h-8 bg-white rounded flex items-center justify-center text-black font-bold">?</div><div class="w-8 h-8 bg-white rounded flex items-center justify-center text-black font-bold">?</div><div class="w-8 h-8 bg-white rounded flex items-center justify-center text-black font-bold">?</div></div><div class="w-full flex justify-between gap-4"><div class="player-seat active"><div class="avatar-online p1"><span class="text-xs">YOU</span></div><div id="p1-choice" class="text-xs text-gold font-bold h-4">...</div></div><div class="text-center"><div id="pvp-status" class="text-gold font-serif text-xl italic mb-1">Waiting...</div><div class="text-[10px] text-gray-500">POT: $ ${(r.bet*2).toLocaleString()}</div></div><div class="player-seat ${r.players>1?'active':''}">    <div class="avatar-online p2"><span class="text-xs">BOT</span></div>    <div id="p2-choice" class="text-xs text-red-400 font-bold h-4">${r.players>1?'...':'Waiting'}</div></div></div></div><div id="pvp-controls" class="grid grid-cols-2 gap-2 mb-2 ${r.players<2?'opacity-50 pointer-events-none':''}"><button onclick="app.online.playerPick('XIU')" class="btn-lux border-white/20 hover:bg-white/10">XỈU (4-10)</button><button onclick="app.online.playerPick('TAI')" class="btn-lux border-white/20 hover:bg-white/10">TÀI (11-17)</button></div>`;
+                    } else {
+                        gameHtml = `<div class="flex-1 flex flex-col items-center justify-center"><p class="text-gray-500 text-xs text-center mb-4">Chế độ Slots PvP đang bảo trì.<br>Vui lòng thử lại sau.</p><button onclick="app.online.renderLobby()" class="btn-lux text-xs">Quay lại Lobby</button></div>`;
+                    }
+                    wrap.innerHTML = `<div class="flex justify-between items-center mb-2 pb-2 border-b border-white/10"><div class="flex items-center gap-2"><button onclick="app.online.leaveRoom()" class="text-gray-500 text-xs hover:text-white">← Rời</button><div class="sound-toggle-btn sound-icon-game" onclick="app.audio.toggle()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg></div></div><span class="text-xs text-gold">${r.name} ($ ${r.bet.toLocaleString()})</span><span class="text-[10px] bg-green-900/30 text-green-500 px-2 rounded border border-green-900">LIVE</span></div>${gameHtml}<div class="mt-auto"><div id="chat-box" class="chat-box no-scrollbar">${this.chatLog.map(c => `<div class="chat-msg ${c.u==='System'?'text-gray-500 italic':'text-gray-300'}"><span class="${c.u===app.user.name?'text-gold':'text-purple-400'}">${c.u}:</span>${c.m}</div>`).join('')}</div><div class="flex gap-2"><input id="chat-input" type="text" class="input-lux text-left py-1 text-sm" placeholder="Chat..." onkeypress="if(event.key==='Enter') app.online.sendChat()"><button onclick="app.online.sendChat()" class="btn-lux px-3 py-1 border-white/20 text-xs">></button></div><div class="flex gap-1 mt-2 overflow-x-auto pb-1 no-scrollbar"><button onclick="app.online.sendEmoji('😎')" class="btn-preset px-2 text-lg">😎</button><button onclick="app.online.sendEmoji('😭')" class="btn-preset px-2 text-lg">😭</button><button onclick="app.online.sendEmoji('🤑')" class="btn-preset px-2 text-lg">🤑</button><button onclick="app.online.sendEmoji('😡')" class="btn-preset px-2 text-lg">😡</button><button onclick="app.online.sendEmoji('Xin chào')" class="btn-preset px-2 text-xs w-auto whitespace-nowrap">Xin chào</button><button onclick="app.online.sendEmoji('Chơi lớn đi')" class="btn-preset px-2 text-xs w-auto whitespace-nowrap">All-in?</button></div></div>`;
+                    const cb = document.getElementById('chat-box'); if(cb) cb.scrollTop = cb.scrollHeight;
+                },
+                addChat(u, m) {
+                    this.chatLog.push({u, m}); if(this.chatLog.length > 50) this.chatLog.shift();
+                    const cb = document.getElementById('chat-box');
+                    if(cb) { cb.innerHTML = this.chatLog.map(c => `<div class="chat-msg ${c.u==='System'?'text-gray-500 italic':'text-gray-300'}"><span class="${c.u===app.user.name?'text-gold':'text-purple-400'}">${c.u}:</span>${c.m}</div>`).join(''); cb.scrollTop = cb.scrollHeight; }
+                },
+                sendChat() {
+                    const inp = $('#chat-input'); const msg = inp.value.trim(); if(!msg) return;
+                    this.addChat(app.user.name, msg); inp.value = '';
+                    if(Math.random() > 0.7 && this.activeRoom.players > 1) { setTimeout(() => { const replies = ["Ghê nha", "Sợ gì", "Chơi tiếp", "Haha", "Hên thôi"]; this.addChat(this.botName, replies[Math.floor(Math.random()*replies.length)]); }, 1500); }
+                },
+                sendEmoji(e) { this.addChat(app.user.name, e); },
+                leaveRoom() { if(confirm("Rời phòng?")) { this.activeRoom = null; this.renderLobby(); } },
+                isRoundActive: false, playerChoice: null,
+                startTaiXiuRound() {
+                    if(!this.activeRoom) return; this.isRoundActive = true; this.playerChoice = null;
+                    $('#pvp-status').innerText = "Đặt cửa đi..."; $('#p1-choice').innerText = "..."; $('#p2-choice').innerText = "...";
+                    $('#pvp-controls').classList.remove('opacity-50', 'pointer-events-none');
+                },
+                playerPick(choice) {
+                    app.audio.playClick();
+                    if(!this.isRoundActive) return; if(!app.checkBalance(this.activeRoom.bet)) return;
+                    this.playerChoice = choice; this.isRoundActive = false;
+                    $('#p1-choice').innerText = choice; $('#pvp-controls').classList.add('opacity-50', 'pointer-events-none');
+                    $('#pvp-status').innerText = "Waiting for Opponent...";
+                    setTimeout(() => { const botPick = Math.random() > 0.5 ? 'TAI' : 'XIU'; $('#p2-choice').innerText = "READY"; setTimeout(() => this.resolveRound(botPick), 1000); }, 1000);
+                },
+                async resolveRound(botPick) {
+                    $('#pvp-status').innerText = "Rolling..."; $('#pvp-dice').classList.add('shaking'); app.audio.playRoll();
+                    await sleep(1500); $('#pvp-dice').classList.remove('shaking');
+                    const d1 = Math.ceil(Math.random()*6); const d2 = Math.ceil(Math.random()*6); const d3 = Math.ceil(Math.random()*6);
+                    const total = d1+d2+d3; const result = (total >= 11 && total <= 17) ? 'TAI' : (total >= 4 && total <= 10) ? 'XIU' : 'BAO';
+                    $('#pvp-dice').innerHTML = `<div class="w-8 h-8 bg-white rounded flex items-center justify-center text-black font-bold">${d1}</div><div class="w-8 h-8 bg-white rounded flex items-center justify-center text-black font-bold">${d2}</div><div class="w-8 h-8 bg-white rounded flex items-center justify-center text-black font-bold">${d3}</div>`;
+                    $('#p2-choice').innerText = botPick; 
+                    let p1Win = (this.playerChoice === result); let botWin = (botPick === result); let bet = this.activeRoom.bet;
+                    let msg = ""; let change = 0;
+                    if(result === 'BAO') { msg = "BÃO! Nhà cái ăn hết!"; change = -bet; } 
+                    else {
+                        if (p1Win && !botWin) { msg = "Bạn Thắng!"; change = bet; } else if (!p1Win && botWin) { msg = "Bạn Thua!"; change = -bet; } 
+                        else if (p1Win && botWin) { msg = "Hòa (Cả 2 thắng)"; change = 0; } else { msg = "Hòa (Cả 2 thua)"; change = -bet; }
+                    }
+                    $('#pvp-status').innerText = `${total} • ${result}`;
+                    if(change > 0) { $('#pvp-status').className = "text-green-400 font-serif text-xl italic mb-1 bubble-pop"; app.recordTx(change, 'PvP TaiXiu'); this.addChat('System', `Bạn đã thắng $ ${change}!`); this.addChat(this.botName, "Hay đó!"); } 
+                    else if (change < 0) { $('#pvp-status').className = "text-red-400 font-serif text-xl italic mb-1 bubble-pop"; app.recordTx(change, 'PvP TaiXiu'); this.addChat(this.botName, "Non quá :))"); } 
+                    else { $('#pvp-status').className = "text-white font-serif text-xl italic mb-1"; }
+                    setTimeout(() => {
+                        this.startTaiXiuRound();
+                        $('#pvp-dice').innerHTML = `<div class="w-8 h-8 bg-white rounded flex items-center justify-center text-black font-bold">?</div><div class="w-8 h-8 bg-white rounded flex items-center justify-center text-black font-bold">?</div><div class="w-8 h-8 bg-white rounded flex items-center justify-center text-black font-bold">?</div>`;
+                        $('#pvp-status').className = "text-gold font-serif text-xl italic mb-1";
+                    }, 3000);
+                }
+            },
+
+            createParticles() {
+                const container = $('#particles');
+                for(let i=0; i<20; i++) {
+                    const p = document.createElement('div');
+                    p.className = 'absolute rounded-full bg-gold/20';
+                    const size = Math.random() * 3 + 1;
+                    p.style.width = size + 'px';
+                    p.style.height = size + 'px';
+                    p.style.left = Math.random() * 100 + 'vw';
+                    p.style.top = Math.random() * 100 + 'vh';
+                    p.style.animation = `float ${Math.random()*10 + 10}s infinite linear`;
+                    container.appendChild(p);
+                }
+                const style = document.createElement('style');
+                style.innerHTML = `@keyframes float { 0% { transform: translateY(0); opacity:0; } 50% { opacity: 0.5; } 100% { transform: translateY(-100px); opacity: 0; } }`;
+                document.head.appendChild(style);
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => app.init());
+
+    </script>
+</body>
+</html>
