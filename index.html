@@ -305,32 +305,32 @@
 
         .bill-overlay {
             position: fixed; inset: 0; z-index: 100000;
-            background: rgba(0,0,0,0.95); backdrop-filter: blur(20px);
+            background: rgba(0,0,0,0.85);
             display: flex; align-items: center; justify-content: center;
-            opacity: 0; pointer-events: none; transition: 0.5s;
+            opacity: 0; pointer-events: none; transition: 0.3s;
         }
         .bill-overlay.active { opacity: 1; pointer-events: auto; }
         .bill-paper {
-            width: 95%; max-width: 600px;
-            background: #0f0f11;
+            width: 90%; max-width: 450px;
+            background: #151517;
             border: 1px solid var(--color-gold);
-            padding: 40px;
-            box-shadow: 0 0 100px rgba(209, 178, 124, 0.3);
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
             position: relative;
-            transform: scale(0.9); transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: scale(0.95); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex; flex-direction: column;
         }
         .bill-overlay.active .bill-paper { transform: scale(1); }
-        .bill-row { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 1.1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; }
-        .bill-row span:last-child { color: white; text-align: right; font-family: var(--font-mono); }
-        .bill-row span:first-child { color: #888; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 2px; }
+        .bill-row { display: flex; justify-content: space-between; margin-bottom: 16px; font-size: 0.95rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; align-items: baseline; }
+        .bill-row:last-of-type { border-bottom: none; }
+        .bill-row span:last-child { color: white; text-align: right; font-family: var(--font-mono); font-size: 0.9rem; max-width: 60%; word-break: break-word; }
+        .bill-row span:first-child { color: #888; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; flex-shrink: 0; }
         .stamp {
-            position: absolute; bottom: 40px; right: 40px;
-            width: 120px; height: 120px; border: 4px solid #D00000; border-radius: 50%;
+            position: absolute; bottom: 30px; right: 30px;
+            width: 100px; height: 100px; border: 3px solid #D00000; border-radius: 50%;
             color: #D00000; display: flex; align-items: center; justify-content: center;
-            font-weight: 900; opacity: 0.8; transform: rotate(-15deg); font-family: 'Courier New', Courier, monospace;
-            font-size: 1.8rem;
-            mask-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxmaWx0ZXIgaWQ9Im5vaXNlIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMC44IiBudW1PY3RhdmVzPSIzIiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsdGVyPSJ1cmwoI25vaXNlKSIgb3BhY2l0eT0iMC41Ii8+PC9zdmc+');
+            font-weight: 900; opacity: 0.7; transform: rotate(-15deg); font-family: 'Courier New', Courier, monospace;
+            font-size: 1.4rem;
         }
     </style>
 </head>
@@ -343,22 +343,23 @@
         
         <div id="bill-modal" class="bill-overlay">
             <div class="bill-paper">
-                <div class="text-center mb-10 border-b border-gold/30 pb-6">
-                    <h2 class="font-serif text-5xl text-gold italic mb-2">Transaction Receipt</h2>
-                    <p class="text-xs text-gray-500 uppercase tracking-[0.5em]">Hóa đơn điện tử</p>
+                <div class="text-center mb-8 border-b border-gold/20 pb-4">
+                    <h2 class="font-serif text-3xl text-gold italic mb-1">Receipt</h2>
+                    <p class="text-[10px] text-gray-500 uppercase tracking-widest">Xác nhận giao dịch</p>
                 </div>
-                <div class="space-y-4 font-mono text-gray-300 flex-1">
-                    <div class="bill-row"><span>Transaction ID</span><span id="bill-id">#TX-0000</span></div>
-                    <div class="bill-row"><span>Date & Time</span><span id="bill-date">--/--/--</span></div>
-                    <div class="bill-row"><span>Sender</span><span id="bill-sender" class="text-gold">---</span></div>
-                    <div class="bill-row"><span>Receiver</span><span id="bill-receiver" class="text-gold">---</span></div>
-                    <div class="bill-row border-none pt-4 mt-4 bg-white/5 p-4 rounded"><span>Total Amount</span><span id="bill-amount" class="text-3xl font-bold text-gold">0</span></div>
+                <div class="space-y-1 font-mono text-gray-300 flex-1 mb-8">
+                    <div class="bill-row"><span>Mã Giao Dịch</span><span id="bill-id" class="text-gold">#---</span></div>
+                    <div class="bill-row"><span>Thời Gian</span><span id="bill-date">--:--</span></div>
+                    <div class="bill-row"><span>Người Gửi</span><span id="bill-sender">---</span></div>
+                    <div class="bill-row"><span>Người Nhận</span><span id="bill-receiver">---</span></div>
+                    <div class="bill-row" style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                        <span>Số Tiền</span>
+                        <span id="bill-amount" class="text-2xl font-bold text-white font-serif">0</span>
+                    </div>
                 </div>
-                <div class="mt-8 mb-10 text-center">
-                    <p id="bill-words" class="text-lg text-gray-400 italic font-serif leading-tight">...</p>
-                </div>
-                <button onclick="document.getElementById('bill-modal').classList.remove('active')" class="btn-lux w-full text-sm py-4 hover:bg-gold hover:text-black">CLOSE RECEIPT</button>
-                <div class="stamp">SUCCESS</div>
+                
+                <button onclick="document.getElementById('bill-modal').classList.remove('active')" class="btn-lux w-full text-xs py-3 hover:bg-gold hover:text-black font-bold">ĐÓNG</button>
+                <div class="stamp">PAID</div>
             </div>
         </div>
 
@@ -731,47 +732,7 @@
         const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
         function numberToEnglishText(n) {
-            const units = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
-            const teens = ["ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
-            const tens = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
-            const scales = ["", "thousand", "million", "billion"];
-
-            if (n === 0) return "Zero dollars";
-
-            let words = "";
-            let scaleIndex = 0;
-
-            function chunk(num) {
-                let str = "";
-                if (num >= 100) {
-                    str += units[Math.floor(num / 100)] + " hundred ";
-                    num %= 100;
-                }
-                if (num >= 10 && num <= 19) {
-                    str += teens[num - 10] + " ";
-                } else if (num >= 20) {
-                    str += tens[Math.floor(num / 10)] + " ";
-                    num %= 10;
-                }
-                if (num > 0 && num < 10) {
-                    str += units[num] + " ";
-                }
-                return str.trim();
-            }
-
-            while (n > 0) {
-                let remainder = n % 1000;
-                if (remainder > 0) {
-                    let s = chunk(remainder);
-                    if (scaleIndex > 0) s += " " + scales[scaleIndex];
-                    words = s + " " + words;
-                }
-                n = Math.floor(n / 1000);
-                scaleIndex++;
-            }
-
-            words = words.trim();
-            return words.charAt(0).toUpperCase() + words.slice(1) + " dollars";
+            return n.toLocaleString() + " VND";
         }
 
         const app = {
@@ -994,9 +955,15 @@
                 
                 const currentStr = $('#dash-score').innerText.replace('$ ','').replace(/,/g,'');
                 const start = parseInt(currentStr) || 0;
+                
                 if(start === target) return;
 
-                const duration = 1000;
+                if (target < start) {
+                    els.forEach(el => el.innerText = '$ ' + target.toLocaleString());
+                    return;
+                }
+
+                const duration = 1500;
                 const startTime = performance.now();
 
                 function update(time) {
@@ -1082,35 +1049,33 @@
                     const list = $('#tx-history-list');
                     if(data.ok && data.items && data.items.length > 0) {
                         list.innerHTML = data.items.map(t => {
-                            const isSend = t.sender_id === app.user.id.replace('U',''); 
+                            const isSend = String(t.sender_id) === String(app.user.id.replace('U',''));
                             const isReceive = !isSend;
                             
                             const amountCls = isReceive ? "text-green-400" : "text-red-400";
-                            const iconCls = isReceive ? "bg-green-500/20 text-green-500" : "bg-red-500/20 text-red-500";
+                            const iconCls = isReceive ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500";
                             const arrow = isReceive ? "↓" : "↑";
                             const sign = isReceive ? "+" : "-";
                             
-                            const label = isReceive ? "Nhận từ" : "Gửi đến";
-                            const personName = isReceive ? t.sender_name : t.receiver_name;
+                            const label = isReceive ? `Nhận từ: ${t.sender_name}` : `Gửi đến: ${t.receiver_name}`;
                             const date = new Date(t.created_at * 1000).toLocaleString('vi-VN');
 
                             return `
                             <div class="flex items-center justify-between p-3 border-b border-white/5 bg-white/5 rounded-lg mb-2 hover:bg-white/10 transition-colors">
                                 <div class="flex items-center gap-3">
-                                     <div class="w-10 h-10 rounded-full ${iconCls} flex items-center justify-center font-bold text-lg">
+                                     <div class="w-8 h-8 rounded-full ${iconCls} flex items-center justify-center font-bold text-sm">
                                          ${arrow}
                                      </div>
                                      <div>
-                                         <p class="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">${label}</p>
-                                         <p class="text-sm font-bold text-gray-200 font-serif text-lg">${personName}</p>
-                                         <p class="text-[10px] text-gray-600 font-mono mt-0.5">${t.id}</p>
+                                         <p class="text-xs font-bold text-gray-200 font-serif">${label}</p>
+                                         <p class="text-[9px] text-gray-500 font-mono mt-0.5">TX: ${t.tx_code}</p>
                                      </div>
                                 </div>
                                 <div class="text-right">
-                                     <p class="font-mono font-bold text-lg ${amountCls}">
+                                     <p class="font-mono font-bold text-sm ${amountCls}">
                                          ${sign}$ ${t.amount.toLocaleString()}
                                      </p>
-                                     <p class="text-[10px] text-gray-500">${date}</p>
+                                     <p class="text-[9px] text-gray-500">${date}</p>
                                 </div>
                             </div>`;
                         }).join('');
@@ -1162,7 +1127,7 @@
                             app.animateBalance(data.newBalance);
                             app.user.score = data.newBalance;
                             this.showBill(data);
-                            this.loadBank();
+                            setTimeout(() => this.loadBank(), 500); 
                             $('#tx-receiver').value = ''; $('#tx-amount').value = ''; $('#rx-preview').innerText = '';
                         } else {
                             alert(data.error || "Lỗi giao dịch");
@@ -1171,12 +1136,11 @@
                     btn.disabled = false; btn.innerText = "XÁC NHẬN CHUYỂN";
                 },
                 showBill(data) {
-                    $('#bill-id').innerText = '#' + data.txId;
-                    $('#bill-date').innerText = new Date(data.date).toLocaleString('en-US');
+                    $('#bill-id').innerText = '#' + (data.txCode || data.txId || '0000');
+                    $('#bill-date').innerText = new Date(data.date).toLocaleString('vi-VN');
                     $('#bill-sender').innerText = data.sender;
                     $('#bill-receiver').innerText = data.receiver;
                     $('#bill-amount').innerText = '$ ' + data.amount.toLocaleString();
-                    $('#bill-words').innerText = numberToEnglishText(data.amount);
                     
                     app.audio.playWin();
                     $('#bill-modal').classList.add('active');
