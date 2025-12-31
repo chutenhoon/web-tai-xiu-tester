@@ -356,6 +356,39 @@
             border-radius: 0;
         }
         #tradeChart { cursor: crosshair; touch-action: none; }
+        
+        .treasure-map {
+            width: 100%; aspect-ratio: 1;
+            background: #2b2b2e; border: 2px solid #5a4d3b;
+            border-radius: 12px; position: relative;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
+            overflow: hidden; cursor: crosshair;
+            background-image: radial-gradient(circle at 30% 30%, #3a3a3e 0%, #2b2b2e 100%);
+        }
+        .treasure-map::before {
+            content: ''; position: absolute; inset: 0;
+            background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 2px, transparent 2px, transparent 10px);
+            opacity: 0.5; pointer-events: none;
+        }
+        .x-mark {
+            position: absolute; width: 40px; height: 40px;
+            transform: translate(-50%, -50%);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Comic Sans MS', cursive; font-weight: 900; color: #8a3a3a;
+            font-size: 1.5rem; text-shadow: 1px 1px 0 rgba(255,255,255,0.2);
+            transition: 0.2s; cursor: pointer; z-index: 10;
+        }
+        .x-mark:hover { transform: translate(-50%, -50%) scale(1.1); color: #d64a4a; }
+        .x-mark:active { transform: translate(-50%, -50%) scale(0.95); }
+        .hole-revealed {
+            width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem; animation: popReveal 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popReveal { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .res-win { color: #FFD700; filter: drop-shadow(0 0 5px gold); }
+        .res-loss { color: #555; filter: grayscale(1); }
+        .res-half { color: #aaa; }
+        
         @media (min-width: 1024px) {
              #view-trading .flex-col {
                 max-width: 100% !important;
@@ -483,6 +516,17 @@
                             <p class="text-xs text-gray-500 mt-2 font-sans">Candles • Leverage • High Risk</p>
                         </div>
                         <div class="flex justify-end"><span class="text-green-400 text-sm uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Trade →</span></div>
+                    </div>
+                    
+                    <div onclick="app.gotoGame('treasure')" class="game-card p-6 rounded-lg cursor-pointer group flex flex-col justify-between h-40" style="border-color: #8a734b;">
+                        <div>
+                            <div class="flex justify-between items-start">
+                                <h3 class="font-serif text-2xl text-ivory italic group-hover:text-[#e0c080] transition-colors">Tìm Kho Báu</h3>
+                                <span class="text-[10px] border border-[#8a734b] text-[#e0c080] px-2 py-0.5 rounded uppercase">x36 Boom</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2 font-sans">Đào đất • May mắn • Nổ hũ</p>
+                        </div>
+                        <div class="flex justify-end"><span class="text-[#e0c080] text-sm uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Dig →</span></div>
                     </div>
 
                     <div class="mt-8 mb-4">
@@ -662,6 +706,50 @@
                             </button>
                         </div>
                     </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="view-treasure" class="view-section z-20">
+            <div class="absolute top-6 right-6 z-30 text-right">
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest">Balance</p>
+                <p class="text-gold font-serif text-xl user-balance-display">$ 0</p>
+            </div>
+            <div class="absolute top-6 left-6 z-30 flex gap-3">
+                <button onclick="app.switchView('view-hall')" class="text-gold font-serif italic hover:opacity-70 text-lg">← Exit</button>
+                <div class="sound-toggle-btn sound-icon-game" onclick="app.audio.toggle()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                </div>
+            </div>
+
+            <div class="w-full h-full flex flex-col items-center p-6 py-12 bg-[#1a1510]">
+                <h2 class="font-serif text-3xl text-[#e0c080] italic mt-8">Treasure Hunt</h2>
+                <div class="text-xs text-gray-500 uppercase tracking-widest mb-6">4 Holes • 1 Win x36 • 2 Lose 100% • 1 Lose 50%</div>
+
+                <div class="w-full max-w-sm flex-1 flex flex-col justify-center">
+                    <div id="treasure-land" class="treasure-map mb-4">
+                        <!-- Holes generated via JS -->
+                    </div>
+                    <div id="treasure-msg" class="h-8 text-center text-[#e0c080] font-serif italic text-xl opacity-0 transition-opacity">
+                        Choose wisely...
+                    </div>
+                </div>
+
+                <div class="w-full mt-auto space-y-4">
+                    <div class="w-full max-w-xs mx-auto mb-4 bg-[#2b2b2e] p-3 rounded-lg border border-[#5a4d3b]">
+                        <div class="relative mb-3">
+                            <input type="number" id="treasure-bet-input" class="input-lux text-center text-2xl font-bold bg-transparent border-none p-0 text-[#e0c080]" value="100">
+                        </div>
+                        <div class="grid grid-cols-5 gap-1">
+                            <button onclick="app.setBet('treasure', 100)" class="btn-preset text-[#bba580] hover:text-[#e0c080]">100</button>
+                            <button onclick="app.setBet('treasure', 500)" class="btn-preset text-[#bba580] hover:text-[#e0c080]">500</button>
+                            <button onclick="app.setBet('treasure', 1000)" class="btn-preset text-[#bba580] hover:text-[#e0c080]">1K</button>
+                            <button onclick="app.setBet('treasure', 5000)" class="btn-preset text-[#bba580] hover:text-[#e0c080]">5K</button>
+                            <button onclick="app.setBet('treasure', 'ALL')" class="btn-preset text-gold border-gold/30">ALL</button>
+                        </div>
+                    </div>
+
+                    <button id="btn-treasure-start" onclick="app.treasure.start()" class="btn-lux w-full border-[#e0c080] text-[#e0c080] font-bold hover:bg-[#e0c080]/10 hover:shadow-[0_0_20px_rgba(224,192,128,0.3)]">START GAME</button>
                 </div>
             </div>
         </section>
@@ -864,6 +952,7 @@
                 if(game === 'tx') inputId = 'tx-bet-input';
                 else if(game === 'bj') inputId = 'bj-bet-input';
                 else if(game === 'slot') inputId = 'slot-bet-input';
+                else if(game === 'treasure') inputId = 'treasure-bet-input';
                 
                 const input = $(`#${inputId}`);
                 if(!input) return;
@@ -1466,6 +1555,141 @@
                     this.isSpinning = false;
                     $('#btn-spin').disabled = false;
                     $('#btn-spin').style.opacity = '1';
+                }
+            },
+            
+            treasure: {
+                isPlaying: false,
+                holes: [],
+                betAmount: 0,
+
+                init() {
+                    this.renderMap();
+                },
+
+                renderMap() {
+                    const land = $('#treasure-land');
+                    land.innerHTML = '';
+                    this.holes.forEach((h, index) => {
+                        const el = document.createElement('div');
+                        el.className = 'x-mark';
+                        el.style.left = h.x + '%';
+                        el.style.top = h.y + '%';
+                        el.innerHTML = 'X';
+                        el.onclick = () => this.dig(index, el);
+                        land.appendChild(el);
+                    });
+                },
+
+                start() {
+                    if (this.isPlaying) return;
+                    const amount = parseInt($('#treasure-bet-input').value);
+                    if (!app.checkBalance(amount)) return;
+
+                    app.audio.playClick();
+                    this.betAmount = amount;
+                    app.user.score -= amount;
+                    app.animateBalance(app.user.score);
+                    this.isPlaying = true;
+                    
+                    $('#btn-treasure-start').classList.add('opacity-30', 'pointer-events-none');
+                    $('#treasure-msg').style.opacity = '1';
+                    $('#treasure-msg').innerText = "Choose a spot...";
+                    $('#treasure-msg').className = "h-8 text-center text-[#e0c080] font-serif italic text-xl transition-opacity";
+                    $('#treasure-bet-input').disabled = true;
+
+                    // Generate random holes
+                    this.holes = [];
+                    const types = ['WIN_36', 'LOSS_100', 'LOSS_100', 'LOSS_50'];
+                    // Shuffle types
+                    for (let i = types.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [types[i], types[j]] = [types[j], types[i]];
+                    }
+
+                    // Generate positions preventing overlap
+                    for (let i = 0; i < 4; i++) {
+                        let x, y, valid = false;
+                        while (!valid) {
+                            x = 15 + Math.random() * 70;
+                            y = 15 + Math.random() * 70;
+                            valid = true;
+                            for (let h of this.holes) {
+                                const dist = Math.hypot(h.x - x, h.y - y);
+                                if (dist < 20) valid = false;
+                            }
+                        }
+                        this.holes.push({ x, y, type: types[i], revealed: false });
+                    }
+                    this.renderMap();
+                },
+
+                dig(index, el) {
+                    if (!this.isPlaying || this.holes[index].revealed) return;
+                    
+                    this.isPlaying = false;
+                    const hole = this.holes[index];
+                    hole.revealed = true;
+                    
+                    // Reveal all
+                    const land = $('#treasure-land');
+                    const allEls = land.children;
+
+                    for(let i=0; i<4; i++) {
+                        const h = this.holes[i];
+                        const div = allEls[i];
+                        div.style.pointerEvents = 'none';
+                        
+                        let icon = '';
+                        let cls = '';
+                        
+                        if (h.type === 'WIN_36') { icon = '👑'; cls = 'res-win'; }
+                        else if (h.type === 'LOSS_50') { icon = '💔'; cls = 'res-half'; }
+                        else { icon = '💀'; cls = 'res-loss'; }
+                        
+                        div.innerHTML = `<div class="hole-revealed ${cls}">${icon}</div>`;
+                    }
+
+                    const msgEl = $('#treasure-msg');
+                    
+                    if (hole.type === 'WIN_36') {
+                        const win = this.betAmount * 36;
+                        app.recordTx(win, 'Treasure Hunt'); // Profit is technically (win - bet), but logic here records pure PNL relative to post-bet state? 
+                        // Note: recordTx adds to score. Score was deducted at start. 
+                        // So if I bet 100, score is -100. Win 3600. I need to add 3600 to score. 
+                        // Net profit is 3500. recordTx expects Amount added to wallet? 
+                        // Looking at Slot logic: recordTx(win - amount). 
+                        // So I should add win amount to score, and record tx as (win - bet).
+                        
+                        // Actually logic says: user.score += amount. 
+                        // So I should pass the payout amount to update score correctly?
+                        // Wait, recordTx adds amount to user.score. 
+                        // Start: Score 1000. Bet 100 -> Score 900.
+                        // Win x36 -> Payout 3600. New Score should be 4500.
+                        // So I need to add 3600.
+                        // recordTx(3600, ...) -> adds 3600.
+                        
+                        app.recordTx(win, 'Treasure Hunt');
+                        
+                        msgEl.innerText = "JACKPOT x36!";
+                        msgEl.className = "h-8 text-center text-gold font-serif italic text-3xl font-bold drop-shadow-md";
+                        app.triggerWinFx(win);
+                    } else if (hole.type === 'LOSS_50') {
+                        const payout = Math.floor(this.betAmount * 0.5);
+                        app.recordTx(payout, 'Treasure Hunt');
+                        msgEl.innerText = "Saved 50%";
+                        msgEl.className = "h-8 text-center text-gray-400 font-serif italic text-xl";
+                    } else {
+                        app.recordTx(0, 'Treasure Hunt'); // Lost everything
+                        msgEl.innerText = "Busted!";
+                        msgEl.className = "h-8 text-center text-red-500 font-serif italic text-xl";
+                        app.audio.playLose();
+                    }
+
+                    setTimeout(() => {
+                        $('#btn-treasure-start').classList.remove('opacity-30', 'pointer-events-none');
+                        $('#treasure-bet-input').disabled = false;
+                    }, 1000);
                 }
             },
 
@@ -2305,6 +2529,9 @@
                              app.trading.chartCtx.scale(dpr, dpr);
                          }, 50);
                     }
+                    if(id === 'view-treasure') {
+                        app.treasure.init();
+                    }
                 }, 100); 
             },
 
@@ -2430,6 +2657,7 @@
                 else if(type === 'blackjack') { this.blackjack.reset(); this.switchView('view-blackjack'); } 
                 else if(type === 'slots') { this.slots.reset(); this.switchView('view-slots'); } 
                 else if(type === 'trading') { this.switchView('view-trading'); }
+                else if(type === 'treasure') { this.switchView('view-treasure'); }
             },
 
             showProfile() {
