@@ -341,6 +341,15 @@
         .trade-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
         .btn-leverage.active { border-color: var(--color-gold); color: var(--color-gold); background: rgba(209,178,124,0.1); }
         .btn-time.active { background: rgba(255,255,255,0.1); border-color: white; color: white; }
+        .btn-res.active { color: var(--color-gold); background: rgba(209,178,124,0.1); border: 1px solid rgba(209, 178, 124, 0.3); }
+        .candle-green { background: #22c55e; }
+        .candle-red { background: #ef4444; }
+        
+        @media (min-width: 1024px) {
+             #view-trading .flex-col {
+                max-width: 100% !important;
+             }
+        }
     </style>
 </head>
 <body>
@@ -588,25 +597,38 @@
                 <button onclick="app.switchView('view-hall')" class="text-gold font-serif italic hover:opacity-70 text-lg">← Exit</button>
             </div>
 
-            <div class="flex flex-col h-full pt-16 pb-4 px-4">
+            <div class="flex flex-col h-full pt-16 pb-4 px-4 w-full">
                 <div class="flex justify-between items-end mb-2">
                     <div>
-                        <h2 class="font-serif text-2xl text-white italic">BTC/USD</h2>
+                        <h2 class="font-serif text-2xl text-white italic">DeJeux/USD</h2>
                         <div class="flex items-center gap-2">
                             <span id="trade-price" class="font-mono text-xl font-bold text-white">54,230.50</span>
                             <span id="trade-change" class="text-xs text-green-500">+0.45%</span>
                         </div>
                     </div>
-                    <div id="trade-timer-display" class="hidden">
-                        <span class="text-[10px] text-gray-500 uppercase block text-right">Time Left</span>
-                        <span id="trade-countdown" class="font-mono text-2xl text-gold font-bold">00:30</span>
+                    <div id="trade-pnl-live" class="hidden text-right">
+                         <span class="text-[10px] text-gray-500 uppercase block">Live PNL</span>
+                         <span id="pnl-live-val" class="font-mono text-xl font-bold text-gray-500">$ 0</span>
                     </div>
                 </div>
+                
+                <!-- Resolution Select -->
+                 <div class="flex gap-2 mb-2">
+                    <button onclick="app.trading.setRes(1)" id="btn-res-1" class="btn-res active text-[10px] px-2 py-0.5 rounded text-gray-400 hover:text-white transition">1s</button>
+                    <button onclick="app.trading.setRes(5)" id="btn-res-5" class="btn-res text-[10px] px-2 py-0.5 rounded text-gray-400 hover:text-white transition">5s</button>
+                    <button onclick="app.trading.setRes(60)" id="btn-res-60" class="btn-res text-[10px] px-2 py-0.5 rounded text-gray-400 hover:text-white transition">1m</button>
+                </div>
 
-                <!-- Canvas Chart -->
-                <div class="relative w-full h-64 bg-[#151518] rounded-lg border border-white/5 mb-4 overflow-hidden">
+                <!-- Canvas Chart (Flex Grow to fill space) -->
+                <div class="relative w-full flex-1 bg-[#151518] rounded-lg border border-white/5 mb-4 overflow-hidden min-h-[300px]">
                     <canvas id="tradeChart" class="w-full h-full"></canvas>
-                    <div id="trade-result-overlay" class="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 pointer-events-none transition-opacity duration-300">
+                    
+                    <div id="trade-timer-overlay" class="absolute top-2 right-2 hidden z-10 bg-black/50 px-2 py-1 rounded backdrop-blur-sm border border-white/10">
+                        <span class="text-[9px] text-gray-400 uppercase mr-2">Closing in:</span>
+                        <span id="trade-countdown" class="font-mono text-gold font-bold">00:00</span>
+                    </div>
+
+                    <div id="trade-result-overlay" class="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 pointer-events-none transition-opacity duration-300 z-20">
                         <div class="text-center transform scale-90 transition-transform duration-300" id="trade-result-box">
                             <p class="text-4xl font-serif italic mb-1" id="trade-res-title">Win</p>
                             <p class="font-mono text-lg" id="trade-res-amt">+$ 100</p>
@@ -614,47 +636,39 @@
                     </div>
                 </div>
 
-                <!-- Controls -->
-                <div class="flex-1 flex flex-col justify-end space-y-4">
-                    <!-- Duration -->
-                    <div>
-                        <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-2">Thời gian</p>
-                        <div class="flex gap-2 bg-white/5 p-1 rounded-lg">
-                            <button onclick="app.trading.setTime(10)" id="btn-time-10" class="flex-1 py-2 text-xs font-bold rounded text-gray-400 btn-time hover:text-white transition">10s</button>
-                            <button onclick="app.trading.setTime(20)" id="btn-time-20" class="flex-1 py-2 text-xs font-bold rounded text-gray-400 btn-time hover:text-white transition">20s</button>
-                            <button onclick="app.trading.setTime(30)" id="btn-time-30" class="flex-1 py-2 text-xs font-bold rounded text-white bg-white/10 btn-time active hover:text-white transition">30s</button>
+                <!-- Controls (Compacted) -->
+                <div class="flex flex-col justify-end space-y-3">
+                    <div class="grid grid-cols-2 gap-4">
+                         <!-- Time -->
+                        <div>
+                            <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Time</p>
+                            <div class="flex gap-1 bg-white/5 p-1 rounded-lg">
+                                <button onclick="app.trading.setTime(10)" id="btn-time-10" class="flex-1 py-1.5 text-xs font-bold rounded text-gray-400 btn-time hover:text-white transition">10s</button>
+                                <button onclick="app.trading.setTime(20)" id="btn-time-20" class="flex-1 py-1.5 text-xs font-bold rounded text-gray-400 btn-time hover:text-white transition">20s</button>
+                                <button onclick="app.trading.setTime(30)" id="btn-time-30" class="flex-1 py-1.5 text-xs font-bold rounded text-white bg-white/10 btn-time active hover:text-white transition">30s</button>
+                            </div>
                         </div>
-                    </div>
-
-                    <!-- Leverage -->
-                    <div>
-                        <div class="flex justify-between mb-2">
-                            <p class="text-[10px] text-gray-500 uppercase tracking-widest">Đòn bẩy</p>
-                            <span id="leverage-val" class="text-xs text-gold font-bold">x10</span>
-                        </div>
-                        <input type="range" min="1" max="100" value="10" class="trade-slider mb-4" oninput="app.trading.setLeverage(this.value)">
-                        <div class="flex justify-between gap-1">
-                            <button onclick="app.trading.setLeverage(5)" class="text-[9px] px-2 py-1 rounded border border-white/10 text-gray-500 btn-leverage" id="lev-5">x5</button>
-                            <button onclick="app.trading.setLeverage(20)" class="text-[9px] px-2 py-1 rounded border border-white/10 text-gray-500 btn-leverage" id="lev-20">x20</button>
-                            <button onclick="app.trading.setLeverage(50)" class="text-[9px] px-2 py-1 rounded border border-white/10 text-gray-500 btn-leverage" id="lev-50">x50</button>
-                            <button onclick="app.trading.setLeverage(100)" class="text-[9px] px-2 py-1 rounded border border-white/10 text-gray-500 btn-leverage" id="lev-100">x100</button>
+                         <!-- Leverage -->
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <p class="text-[10px] text-gray-500 uppercase tracking-widest">Lev <span id="leverage-val" class="text-gold font-bold ml-1">x10</span></p>
+                            </div>
+                             <input type="range" min="1" max="100" value="10" class="trade-slider mb-2" oninput="app.trading.setLeverage(this.value)">
                         </div>
                     </div>
 
                     <!-- Amount & Actions -->
-                    <div class="flex gap-4 items-end">
-                        <div class="flex-1">
-                             <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Tiền cược</p>
-                             <input type="number" id="trade-amount" class="w-full bg-white/5 border border-white/10 rounded p-2 text-center text-white font-mono outline-none focus:border-gold transition" value="100">
+                    <div class="flex gap-3 items-end">
+                        <div class="w-1/3">
+                             <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Amount</p>
+                             <input type="number" id="trade-amount" class="w-full bg-white/5 border border-white/10 rounded p-2 text-center text-white font-mono outline-none focus:border-gold transition text-sm font-bold" value="100">
                         </div>
                         <div class="flex-1 flex gap-2">
                             <button onclick="app.trading.placeOrder('up')" id="btn-long" class="flex-1 bg-green-500/10 border border-green-500/50 text-green-400 py-3 rounded font-bold hover:bg-green-500 hover:text-black transition shadow-[0_0_15px_rgba(74,222,128,0.1)]">
                                 LONG
-                                <span class="block text-[9px] font-normal opacity-70">Cao hơn</span>
                             </button>
                             <button onclick="app.trading.placeOrder('down')" id="btn-short" class="flex-1 bg-red-500/10 border border-red-500/50 text-red-400 py-3 rounded font-bold hover:bg-red-500 hover:text-black transition shadow-[0_0_15px_rgba(248,113,113,0.1)]">
                                 SHORT
-                                <span class="block text-[9px] font-normal opacity-70">Thấp hơn</span>
                             </button>
                         </div>
                     </div>
@@ -1269,21 +1283,23 @@
                 }
             },
 
-            // Trading Logic Object
+            // Trading Logic Object (Candlestick Version)
             trading: {
                 chartCtx: null,
                 isTrading: false,
                 currentPrice: 54000,
-                history: [],
+                candles: [], // {o,h,l,c,t}
+                currentCandle: null,
                 betTime: 30, // seconds
                 leverage: 10,
-                activeOrder: null, // { dir: 'up'|'down', entry: 0, bet: 0, lev: 0, startTime: 0 }
+                activeOrder: null, 
                 interval: null,
+                candleResolution: 1, // seconds
                 
                 init() {
                     const cvs = document.getElementById('tradeChart');
                     if (cvs) {
-                        // Fix blurry canvas on high DPI
+                        // High DPI Canvas
                         const dpr = window.devicePixelRatio || 1;
                         const rect = cvs.getBoundingClientRect();
                         cvs.width = rect.width * dpr;
@@ -1291,14 +1307,22 @@
                         this.chartCtx = cvs.getContext('2d');
                         this.chartCtx.scale(dpr, dpr);
                         
-                        // Seed history
-                        this.history = [];
+                        // Seed history candles
+                        this.candles = [];
                         let p = 54000;
-                        for(let i=0; i<60; i++) {
-                            p = p + (Math.random() - 0.5) * 50;
-                            this.history.push(p);
+                        const now = Math.floor(Date.now() / 1000);
+                        
+                        for(let i=0; i<40; i++) {
+                            const o = p;
+                            const c = p + (Math.random() - 0.5) * 30;
+                            const h = Math.max(o, c) + Math.random() * 10;
+                            const l = Math.min(o, c) - Math.random() * 10;
+                            this.candles.push({ o, h, l, c, t: now - (40-i)*this.candleResolution });
+                            p = c;
                         }
                         this.currentPrice = p;
+                        this.currentCandle = { o: p, h: p, l: p, c: p, t: now };
+                        
                         this.startLoop();
                     }
                 },
@@ -1315,6 +1339,15 @@
                     btn.classList.add('active', 'bg-white/10', 'text-white');
                     btn.classList.remove('text-gray-400');
                 },
+
+                setRes(r) {
+                    app.audio.playClick();
+                    this.candleResolution = r;
+                    $$('.btn-res').forEach(b => b.classList.remove('active'));
+                    document.getElementById(`btn-res-${r}`).classList.add('active');
+                    // Reset candles for visual consistency
+                    this.candles = this.candles.slice(-10); // keep a few
+                },
                 
                 setLeverage(l) {
                     app.audio.playClick();
@@ -1322,10 +1355,6 @@
                     this.leverage = parseInt(l);
                     document.getElementById('leverage-val').innerText = 'x' + this.leverage;
                     document.querySelector('.trade-slider').value = this.leverage;
-                    
-                    $$('.btn-leverage').forEach(b => b.classList.remove('active'));
-                    const btn = document.getElementById(`lev-${l}`);
-                    if(btn) btn.classList.add('active');
                 },
                 
                 placeOrder(dir) {
@@ -1348,30 +1377,25 @@
                     // Lock inputs
                     document.getElementById('trade-amount').disabled = true;
                     document.querySelector('.trade-slider').disabled = true;
-                    $$('.btn-time, .btn-leverage, #btn-long, #btn-short').forEach(b => b.disabled = true);
+                    $$('.btn-time, .btn-res, #btn-long, #btn-short').forEach(b => b.disabled = true);
                     $$('#btn-long, #btn-short').forEach(b => b.classList.add('opacity-50'));
                     
-                    document.getElementById('trade-timer-display').classList.remove('hidden');
+                    document.getElementById('trade-timer-overlay').classList.remove('hidden');
+                    document.getElementById('trade-pnl-live').classList.remove('hidden');
                     
-                    // Deduct balance visually (locked)
+                    // Deduct balance visually
                     app.user.score -= bet;
-                    // app.animateBalance(app.user.score); // Don't animate yet, doing live updates
                 },
                 
                 closeOrder(pnl) {
                     this.isTrading = false;
-                    
-                    // Final Logic
                     let payout = 0;
                     if (pnl + this.activeOrder.bet <= 0) {
-                        // Liquidation / Loss > Bet
-                        payout = 0; // Lost the bet amount
+                        payout = 0;
                     } else {
-                        // Return remaining principal + profit (or minus loss)
                         payout = this.activeOrder.bet + pnl;
                     }
                     
-                    // Update user score real (add payout, since we deducted bet at start)
                     const profit = payout - this.activeOrder.bet;
                     app.recordTx(Math.round(profit), 'Trading 30s');
                     
@@ -1411,9 +1435,10 @@
                          // Unlock controls
                         document.getElementById('trade-amount').disabled = false;
                         document.querySelector('.trade-slider').disabled = false;
-                        $$('.btn-time, .btn-leverage, #btn-long, #btn-short').forEach(b => b.disabled = false);
+                        $$('.btn-time, .btn-res, #btn-long, #btn-short').forEach(b => b.disabled = false);
                         $$('#btn-long, #btn-short').forEach(b => b.classList.remove('opacity-50'));
-                        document.getElementById('trade-timer-display').classList.add('hidden');
+                        document.getElementById('trade-timer-overlay').classList.add('hidden');
+                        document.getElementById('trade-pnl-live').classList.add('hidden');
                         
                         this.activeOrder = null;
                         app.animateBalance(app.user.score);
@@ -1422,7 +1447,6 @@
                 
                 startLoop() {
                     if (this.interval) return;
-                    
                     const loop = () => {
                         this.updatePrice();
                         this.drawChart();
@@ -1432,54 +1456,63 @@
                 },
                 
                 updatePrice() {
-                    // Random walk with leverage simulation effect
-                    // Higher leverage doesn't change market price, but we simulate volatility for excitement
-                    const vol = this.isTrading ? (5 + (this.leverage / 10)) : 10; 
-                    const change = (Math.random() - 0.5) * vol;
+                    // Volatility
+                    const vol = this.isTrading ? (3 + (this.leverage / 15)) : 2; 
+                    const change = (Math.random() - 0.5) * vol; // Slower tick
                     
-                    // Bias slightly to make it look trendy
-                    // 60% chance to follow previous direction
+                    // Add small trend bias
+                    const trend = Math.sin(Date.now() / 5000) * 1; 
                     
-                    this.currentPrice += change;
-                    this.history.push(this.currentPrice);
-                    if(this.history.length > 100) this.history.shift();
+                    this.currentPrice += (change + trend);
                     
-                    // Update DOM Price
+                    // Update Current Candle
+                    this.currentCandle.c = this.currentPrice;
+                    this.currentCandle.h = Math.max(this.currentCandle.h, this.currentPrice);
+                    this.currentCandle.l = Math.min(this.currentCandle.l, this.currentPrice);
+                    
+                    const now = Math.floor(Date.now() / 1000);
+                    // Check if new candle needed
+                    if (now >= this.currentCandle.t + this.candleResolution) {
+                         this.candles.push({ ...this.currentCandle });
+                         this.currentCandle = { o: this.currentPrice, h: this.currentPrice, l: this.currentPrice, c: this.currentPrice, t: now };
+                         if(this.candles.length > 50) this.candles.shift();
+                    }
+                    
+                    // DOM Updates
                     const elPrice = document.getElementById('trade-price');
                     const elChange = document.getElementById('trade-change');
                     if(elPrice) {
                         elPrice.innerText = this.currentPrice.toFixed(2);
-                        elPrice.className = `font-mono text-xl font-bold ${change >= 0 ? 'text-green-400' : 'text-red-400'}`;
+                        const diff = this.currentPrice - this.candles[0].o;
+                        const pct = (diff / this.candles[0].o) * 100;
+                        elChange.innerText = (diff>=0?'+':'') + pct.toFixed(2) + '%';
+                        elChange.className = `text-xs ${diff >= 0 ? 'text-green-500' : 'text-red-500'}`;
+                        elPrice.className = `font-mono text-xl font-bold ${diff >= 0 ? 'text-green-400' : 'text-red-400'}`;
                     }
                     
-                    // Handle Active Trade
+                    // Active Trade Logic
                     if(this.isTrading && this.activeOrder) {
-                        const now = Date.now();
-                        const timeLeft = Math.max(0, this.activeOrder.endTime - now);
+                        const nowMs = Date.now();
+                        const timeLeft = Math.max(0, this.activeOrder.endTime - nowMs);
                         
-                        // Timer
                         document.getElementById('trade-countdown').innerText = (timeLeft/1000).toFixed(1) + 's';
                         
-                        // PnL Calc
-                        // (Current - Entry) / Entry * Leverage * Bet
+                        // PnL
                         const priceDiff = this.currentPrice - this.activeOrder.entry;
                         const directionMult = this.activeOrder.dir === 'up' ? 1 : -1;
                         let pnlPercent = (priceDiff / this.activeOrder.entry) * this.activeOrder.lev * directionMult;
-                        
-                        // Cap loss at -100% (liquidation)
-                        // But for game fun, let it swing wildly visually until close? 
-                        // Let's cap visual PnL at -Bet.
                         let currentPnL = this.activeOrder.bet * pnlPercent;
                         
-                        // Live Balance Simulation
-                        const tempBalance = app.user.score + this.activeOrder.bet + currentPnL; // Score already deducted bet
-                        // Visual update only
-                        $$('.user-balance-display').forEach(el => el.textContent = '$ ' + Math.max(0, Math.floor(tempBalance)).toLocaleString());
-                        
-                        // End Trade
-                        if(timeLeft <= 0) {
-                            this.closeOrder(currentPnL);
-                        }
+                        // Live Balance Simulation (Bet was already deducted, so we add back potential payout - bet)
+                        const floatBalance = app.user.score + (this.activeOrder.bet + currentPnL);
+                        $$('.user-balance-display').forEach(el => el.textContent = '$ ' + Math.max(0, Math.floor(floatBalance)).toLocaleString());
+
+                        // Live PnL Badge
+                        const pnlEl = document.getElementById('pnl-live-val');
+                        pnlEl.innerText = (currentPnL>=0?'+':'') + '$ ' + Math.round(currentPnL).toLocaleString();
+                        pnlEl.className = `font-mono text-xl font-bold ${currentPnL >= 0 ? 'text-green-400' : 'text-red-500'}`;
+
+                        if(timeLeft <= 0) this.closeOrder(currentPnL);
                     }
                 },
                 
@@ -1487,89 +1520,96 @@
                     const ctx = this.chartCtx;
                     if (!ctx) return;
                     
-                    const w = ctx.canvas.width / (window.devicePixelRatio || 1);
-                    const h = ctx.canvas.height / (window.devicePixelRatio || 1);
+                    // Handle Resize
+                    const cvs = ctx.canvas;
+                    const parent = cvs.parentElement;
+                    const dpr = window.devicePixelRatio || 1;
+                    if (cvs.width !== parent.clientWidth * dpr || cvs.height !== parent.clientHeight * dpr) {
+                         cvs.width = parent.clientWidth * dpr;
+                         cvs.height = parent.clientHeight * dpr;
+                         ctx.scale(dpr, dpr);
+                    }
+                    
+                    const w = parent.clientWidth;
+                    const h = parent.clientHeight;
                     
                     ctx.clearRect(0, 0, w, h);
                     
-                    // Draw Grid
-                    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+                    // Grid
+                    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
                     ctx.lineWidth = 1;
                     ctx.beginPath();
-                    for(let i=0; i<w; i+=40) { ctx.moveTo(i,0); ctx.lineTo(i,h); }
-                    for(let i=0; i<h; i+=40) { ctx.moveTo(0,i); ctx.lineTo(w,i); }
+                    for(let i=0; i<w; i+=50) { ctx.moveTo(i,0); ctx.lineTo(i,h); }
+                    for(let i=0; i<h; i+=50) { ctx.moveTo(0,i); ctx.lineTo(w,i); }
                     ctx.stroke();
                     
-                    // Calculate Scales
-                    const minP = Math.min(...this.history);
-                    const maxP = Math.max(...this.history);
-                    const range = maxP - minP || 1;
-                    const padding = range * 0.2; // 20% padding top/bottom
+                    // Scales
+                    const allCandles = [...this.candles, this.currentCandle];
+                    let minP = Infinity, maxP = -Infinity;
+                    allCandles.forEach(c => { minP = Math.min(minP, c.l); maxP = Math.max(maxP, c.h); });
+                    const padding = (maxP - minP) * 0.2;
+                    const range = (maxP - minP) + (padding*2) || 1;
                     
-                    const getY = (price) => {
-                        return h - ((price - (minP - padding)) / (range + padding*2)) * h;
-                    };
+                    const getY = (price) => h - ((price - (minP - padding)) / range) * h;
                     
-                    // Draw Line
-                    ctx.beginPath();
-                    const step = w / (this.history.length - 1);
+                    // Draw Candles
+                    const count = allCandles.length;
+                    const candleWidth = (w / count) * 0.7;
+                    const spacing = (w / count) * 0.3;
                     
-                    // Gradient Fill
-                    const grad = ctx.createLinearGradient(0, 0, 0, h);
-                    grad.addColorStop(0, 'rgba(34, 197, 94, 0.2)'); // Greenish
-                    grad.addColorStop(1, 'rgba(34, 197, 94, 0)');
+                    allCandles.forEach((c, i) => {
+                        const x = i * (candleWidth + spacing) + spacing/2;
+                        const yO = getY(c.o);
+                        const yC = getY(c.c);
+                        const yH = getY(c.h);
+                        const yL = getY(c.l);
+                        
+                        const isGreen = c.c >= c.o;
+                        ctx.fillStyle = isGreen ? '#22c55e' : '#ef4444';
+                        ctx.strokeStyle = isGreen ? '#22c55e' : '#ef4444';
+                        
+                        // Wick
+                        ctx.beginPath();
+                        ctx.moveTo(x + candleWidth/2, yH);
+                        ctx.lineTo(x + candleWidth/2, yL);
+                        ctx.stroke();
+                        
+                        // Body
+                        let bodyH = Math.abs(yC - yO);
+                        if(bodyH < 1) bodyH = 1; // min height
+                        ctx.fillRect(x, Math.min(yO, yC), candleWidth, bodyH);
+                    });
                     
-                    ctx.moveTo(0, getY(this.history[0]));
-                    for(let i=1; i<this.history.length; i++) {
-                        // Smooth curve
-                        const x = i * step;
-                        const y = getY(this.history[i]);
-                        ctx.lineTo(x, y);
-                    }
-                    
-                    ctx.strokeStyle = '#4ade80';
-                    ctx.lineWidth = 2;
-                    ctx.lineJoin = 'round';
-                    ctx.stroke();
-                    
-                    // Close path for fill
-                    ctx.lineTo(w, h);
-                    ctx.lineTo(0, h);
-                    ctx.closePath();
-                    ctx.fillStyle = grad;
-                    ctx.fill();
-                    
-                    // Entry Line
+                    // Trade Lines
                     if(this.isTrading && this.activeOrder) {
                         const yEntry = getY(this.activeOrder.entry);
                         ctx.beginPath();
                         ctx.moveTo(0, yEntry);
                         ctx.lineTo(w, yEntry);
-                        ctx.strokeStyle = this.activeOrder.dir === 'up' ? '#4ade80' : '#f87171';
+                        ctx.strokeStyle = '#ffffff';
                         ctx.setLineDash([5, 5]);
-                        ctx.lineWidth = 1;
                         ctx.stroke();
                         ctx.setLineDash([]);
                         
-                        // Badge
-                        ctx.fillStyle = this.activeOrder.dir === 'up' ? '#4ade80' : '#f87171';
+                        ctx.fillStyle = '#fff';
                         ctx.font = '10px monospace';
-                        ctx.fillText(this.activeOrder.dir === 'up' ? 'LONG ENTRY' : 'SHORT ENTRY', 5, yEntry - 5);
+                        ctx.fillText('ENTRY', 5, yEntry - 5);
                     }
                     
-                    // Current Price Pulse
-                    const lastX = w;
-                    const lastY = getY(this.currentPrice);
-                    
+                    // Current Price Line
+                    const yCurr = getY(this.currentPrice);
                     ctx.beginPath();
-                    ctx.arc(lastX, lastY, 4, 0, Math.PI*2);
-                    ctx.fillStyle = '#fff';
-                    ctx.fill();
-                    
-                    ctx.beginPath();
-                    ctx.arc(lastX, lastY, 10, 0, Math.PI*2);
-                    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                    ctx.moveTo(0, yCurr);
+                    ctx.lineTo(w, yCurr);
+                    ctx.strokeStyle = 'rgba(209, 178, 124, 0.5)';
                     ctx.stroke();
+                    
+                    // Current Price Badge
+                    ctx.fillStyle = '#D1B27C';
+                    ctx.fillRect(w - 60, yCurr - 10, 60, 20);
+                    ctx.fillStyle = '#000';
+                    ctx.font = 'bold 10px monospace';
+                    ctx.fillText(this.currentPrice.toFixed(2), w - 55, yCurr + 3);
                 }
             },
 
@@ -1639,6 +1679,17 @@
                     el.classList.remove('active');
                     el.style.pointerEvents = 'none';
                 });
+                
+                // Desktop responsiveness fix for trading view
+                const mainApp = document.getElementById('app');
+                if(id === 'view-trading') {
+                     // Allow wider width on desktop for trading
+                     mainApp.classList.remove('max-w-md');
+                     mainApp.classList.add('lg:max-w-5xl');
+                } else {
+                     mainApp.classList.add('max-w-md');
+                     mainApp.classList.remove('lg:max-w-5xl');
+                }
                 
                 setTimeout(() => {
                     $(`#${id}`).classList.add('active');
