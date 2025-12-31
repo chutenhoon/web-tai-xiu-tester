@@ -277,9 +277,6 @@
         .chat-msg span { font-weight: bold; margin-right: 4px; }
         .player-seat { display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.5; transition: 0.3s; }
         .player-seat.active { opacity: 1; }
-        .avatar-online { width: 50px; height: 50px; border-radius: 50%; background: #222; border: 2px solid #444; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .avatar-online.p1 { border-color: var(--color-gold); box-shadow: 0 0 10px rgba(209,178,124,0.3); }
-        .avatar-online.p2 { border-color: #B56576; box-shadow: 0 0 10px rgba(181,101,118,0.3); }
         
         .bubble-pop { animation: bubblePop 0.3s ease-out; }
         @keyframes bubblePop { 0% { transform: scale(0.5); opacity: 0; } 80% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
@@ -804,7 +801,7 @@
                         <button id="btn-xiu" onclick="app.taixiu.select('XIU')" class="btn-lux btn-pill flex-1 border-white/20 text-white/80 hover:border-gold">XỈU <span class="block text-[9px] opacity-50 mt-1">4 — 10</span></button>
                         <button id="btn-tai" onclick="app.taixiu.select('TAI')" class="btn-lux btn-pill flex-1 border-white/20 text-white/80 hover:border-gold">TÀI <span class="block text-[9px] opacity-50 mt-1">11 — 17</span></button>
                     </div>
-                    <button id="btn-tx-roll" onclick="app.taixiu.roll()" class="btn-lux w-full bg-gold/10 border-gold text-gold font-bold opacity-0 pointer-events-none transition-opacity">LANCER</button>
+                    <button id="btn-tx-roll" onclick="app.taixiu.roll()" class="btn-lux w-full bg-gold/10 border-gold text-gold font-bold opacity-30 pointer-events-none transition-opacity">LANCER</button>
                 </div>
             </div>
         </section>
@@ -924,10 +921,6 @@
              </div>
         </section>
 
-        <section id="view-online" class="view-section z-20">
-            <div id="online-wrapper" class="h-full flex flex-col p-6"></div>
-        </section>
-
     </div>
 
     <script>
@@ -947,6 +940,30 @@
             particles: [],
             apiBase: "/api",
             sessionToken: null,
+            
+            checkBalance(amount) {
+                if (this.user.score >= amount) return true;
+                alert("Số dư không đủ!");
+                return false;
+            },
+
+            setBet(game, val) {
+                let inputId = '';
+                if(game === 'tx') inputId = 'tx-bet-input';
+                else if(game === 'bj') inputId = 'bj-bet-input';
+                else if(game === 'slot') inputId = 'slot-bet-input';
+                else if(game === 'treasure') inputId = 'treasure-bet-input';
+                
+                const input = $(`#${inputId}`);
+                if(!input) return;
+
+                if(val === 'ALL') {
+                    input.value = this.user.score;
+                } else {
+                    input.value = parseInt(val);
+                }
+                this.audio.playClick();
+            },
             
             audio: {
                 ctx: null,
@@ -1118,16 +1135,16 @@
                 async sendTx(amount, game) {
                     if(!app.sessionToken) return;
                     try {
-                        // Fire and forget - do not await
-                        fetch(app.apiBase + '/tx', {
+                        const res = await fetch(app.apiBase + '/tx', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'Authorization': 'Bearer ' + app.sessionToken
                             },
                             body: JSON.stringify({ amount, game })
-                        }).catch(() => {});
-                    } catch(e) {}
+                        });
+                        return await res.json();
+                    } catch(e) { return null; }
                 },
                 async loadLeaderboard(tab) {
                     try {
@@ -1141,60 +1158,54 @@
 
             async syncData() {
                 if(!app.sessionToken) return;
-                // Periodic sync still happens, but instant updates rely on local state
+                const data = await app.api.sendTx(0, 'SYNC'); 
+                if(data && data.ok) {
+                    if(typeof data.score === 'number' && data.score !== app.user.score) {
+                         app.animateBalance(data.score);
+                         app.user.score = data.score;
+                         if(app.profile.activeTab === 'bank' && $('#view-profile').classList.contains('active')) {
+                             app.profile.loadBank(true);
+                         }
+                    }
+                    if(typeof data.totalWins === 'number') app.user.totalWins = data.totalWins;
+                    if(typeof data.maxWin === 'number') app.user.bestWin = data.maxWin;
+                    app.pnl.renderStats();
+                }
             },
 
-            updateBalanceUI(animate = false) {
+            animateBalance(target) {
                 const els = $$('.user-balance-display, #dash-score, #bank-balance');
                 if(!els.length) return;
-                const target = app.user.score;
                 
-                if (!animate) {
+                const currentStr = $('#dash-score').innerText.replace('$ ','').replace(/,/g,'');
+                const start = parseInt(currentStr) || 0;
+                
+                if(start === target) return;
+
+                if (target < start) {
                     els.forEach(el => el.innerText = '$ ' + target.toLocaleString());
                     return;
                 }
 
-                const currentStr = $('#dash-score').innerText.replace('$ ','').replace(/,/g,'').replace(/\./g,'');
-                const start = parseInt(currentStr) || 0;
-                if(start === target) return;
-
-                const duration = 1000;
+                const duration = 1500;
                 const startTime = performance.now();
 
                 function update(time) {
                     const elapsed = time - startTime;
                     const progress = Math.min(elapsed / duration, 1);
                     const ease = 1 - Math.pow(1 - progress, 3);
+                    
                     const val = Math.floor(start + (target - start) * ease);
                     els.forEach(el => el.innerText = '$ ' + val.toLocaleString());
+
                     if(progress < 1) requestAnimationFrame(update);
                 }
                 requestAnimationFrame(update);
             },
 
-            deductBet(amount) {
-                this.user.score -= amount;
-                this.updateBalanceUI(false); // Static update
-            },
-
-            processGameEnd(payout, bet, game) {
-                this.user.score += payout;
-                this.updateBalanceUI(true); // Animate update
-                
-                const pnl = payout - bet;
-                this.user.history.push({ date: Date.now(), amount: pnl, game: game });
-                if(this.user.history.length > 200) this.user.history.shift();
-                this.saveUser();
-                
-                // Fire API immediately
-                this.api.sendTx(pnl, game);
-                
-                if (pnl > 0) this.triggerWinFx(pnl);
-                else if (pnl < 0) this.triggerLoseFx(Math.abs(pnl));
-            },
-
             taixiu: {
-                selection: null, isRolling: false,
+                selection: null,
+                isRolling: false,
                 reset() {
                     this.selection = null;
                     this.isRolling = false;
@@ -1218,7 +1229,8 @@
                     if(!app.checkBalance(amount)) return;
                     
                     this.isRolling = true;
-                    app.deductBet(amount);
+                    app.user.score -= amount;
+                    app.animateBalance(app.user.score);
                     
                     app.audio.playRoll();
                     const dice = [$('#die-1'), $('#die-2'), $('#die-3')];
@@ -1264,41 +1276,74 @@
             },
 
             blackjack: {
-                deck: [], playerHand: [], dealerHand: [], gameState: 'BET', currentBet: 0,
-                suits: ['♥', '♦', '♣', '♠'], values: ['2','3','4','5','6','7','8','9','10','J','Q','K','A'],
-                createDeck() {
-                    let d = [];
-                    for(let s of this.suits) for(let v of this.values) d.push({ suit: s, val: v, color: (s==='♥'||s==='♦') ? 'red' : 'black' });
-                    return d.sort(() => Math.random() - 0.5);
+                deck: [],
+                playerHand: [],
+                dealerHand: [],
+                gameActive: false,
+                betAmount: 0,
+                
+                reset() {
+                    this.gameActive = false;
+                    this.playerHand = [];
+                    this.dealerHand = [];
+                    $('#bj-player-cards').innerHTML = '';
+                    $('#bj-dealer-cards').innerHTML = '';
+                    $('#bj-player-score').innerText = '0';
+                    $('#bj-dealer-score').innerText = '0';
+                    $('#bj-dealer-score-box').classList.add('opacity-0');
+                    $('#bj-controls-bet').classList.remove('hidden');
+                    $('#bj-controls-play').classList.add('hidden');
+                    $('#bj-msg').style.opacity = '0';
                 },
-                getScore(hand) {
-                    let score = 0; let aces = 0;
-                    for(let c of hand) {
-                        if(['J','Q','K'].includes(c.val)) score += 10;
-                        else if(c.val === 'A') { score += 11; aces++; }
-                        else score += parseInt(c.val);
+                
+                createDeck() {
+                    const suits = ['h', 'd', 'c', 's'];
+                    const ranks = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+                    let deck = [];
+                    for(let s of suits) {
+                        for(let r of ranks) {
+                            let val = parseInt(r);
+                            if(r === 'J' || r === 'Q' || r === 'K') val = 10;
+                            if(r === 'A') val = 11;
+                            deck.push({ r, s, val });
+                        }
                     }
-                    while(score > 21 && aces > 0) { score -= 10; aces--; }
+                    return deck.sort(() => Math.random() - 0.5);
+                },
+                
+                getCardHtml(card, hidden=false) {
+                    if(hidden) return `<div class="card-bj card-back deal-anim"><div class="card-value-lg">?</div></div>`;
+                    const color = (card.s === 'h' || card.s === 'd') ? 'red' : 'black';
+                    const suitIcon = {'h':'♥','d':'♦','c':'♣','s':'♠'}[card.s];
+                    return `<div class="card-bj ${color} deal-anim">
+                        <div class="card-top-val">${card.r}<br>${suitIcon}</div>
+                        <div class="card-value-lg">${suitIcon}</div>
+                        <div class="card-top-val" style="transform: rotate(180deg)">${card.r}<br>${suitIcon}</div>
+                    </div>`;
+                },
+                
+                calcScore(hand) {
+                    let score = 0;
+                    let aces = 0;
+                    hand.forEach(c => {
+                        score += c.val;
+                        if(c.r === 'A') aces++;
+                    });
+                    while(score > 21 && aces > 0) {
+                        score -= 10;
+                        aces--;
+                    }
                     return score;
                 },
-                renderCard(card, hidden=false) {
-                    if(hidden) return `<div class="card-bj card-back deal-anim"><div class="card-value-lg">?</div></div>`;
-                    return `<div class="card-bj ${card.color} ${['J','Q','K','A'].includes(card.val) ? 'gold-border' : ''} deal-anim"><div class="card-top-val">${card.val}<br>${card.suit}</div><div class="card-value-lg">${card.suit}</div><div class="card-top-val self-end rotate-180">${card.val}<br>${card.suit}</div></div>`;
-                },
-                reset() {
-                    $('#bj-dealer-cards').innerHTML = ''; $('#bj-player-cards').innerHTML = '';
-                    $('#bj-player-score').innerText = '0'; $('#bj-dealer-score').innerText = '0';
-                    $('#bj-dealer-score-box').classList.add('opacity-0'); $('#bj-msg').classList.add('opacity-0');
-                    $('#bj-controls-bet').classList.remove('hidden'); $('#bj-controls-play').classList.add('hidden');
-                    this.gameState = 'BET';
-                },
+                
                 async deal() {
-                    const bet = parseInt($('#bj-bet-input').value);
-                    if(!app.checkBalance(bet)) return;
+                    const amount = parseInt($('#bj-bet-input').value);
+                    if(!app.checkBalance(amount)) return;
                     
                     app.audio.playClick();
-                    this.currentBet = bet;
-                    app.deductBet(bet);
+                    this.betAmount = amount;
+                    app.user.score -= amount;
+                    app.animateBalance(app.user.score);
                     
                     this.deck = this.createDeck();
                     this.playerHand = [this.deck.pop(), this.deck.pop()];
@@ -1312,176 +1357,238 @@
                     
                     this.renderHands(true);
                     
-                    const pScore = this.getScore(this.playerHand);
+                    const pScore = this.calcScore(this.playerHand);
                     if(pScore === 21) {
                          await sleep(500);
                          this.stand();
                     }
                 },
-                hit() {
-                    this.playerHand.push(this.deck.pop()); app.audio.playCard(); this.renderHands(true);
-                    if(this.getScore(this.playerHand) > 21) this.endGame('BUST');
+                
+                renderHands(hideDealer=true) {
+                    const pContainer = $('#bj-player-cards');
+                    const dContainer = $('#bj-dealer-cards');
+                    
+                    pContainer.innerHTML = this.playerHand.map(c => this.getCardHtml(c)).join('');
+                    if(hideDealer) {
+                        dContainer.innerHTML = this.getCardHtml(this.dealerHand[0]) + this.getCardHtml(null, true);
+                    } else {
+                        dContainer.innerHTML = this.dealerHand.map(c => this.getCardHtml(c)).join('');
+                    }
+                    
+                    $('#bj-player-score').innerText = this.calcScore(this.playerHand);
+                    if(!hideDealer) {
+                        $('#bj-dealer-score').innerText = this.calcScore(this.dealerHand);
+                        $('#bj-dealer-score-box').classList.remove('opacity-0');
+                    }
+                    app.audio.playCard();
                 },
+                
+                hit() {
+                    if(!this.gameActive) return;
+                    app.audio.playClick();
+                    this.playerHand.push(this.deck.pop());
+                    this.renderHands(true);
+                    
+                    const score = this.calcScore(this.playerHand);
+                    if(score > 21) this.endGame('BUST');
+                    else if(score === 21) setTimeout(() => this.stand(), 500);
+                },
+                
                 async stand() {
-                    while(this.getScore(this.dealerHand) < 17) { await sleep(500); this.dealerHand.push(this.deck.pop()); app.audio.playCard(); this.renderHands(false); }
+                    if(!this.gameActive) return;
+                    app.audio.playClick();
+                    this.gameActive = false;
+                    this.renderHands(false);
                     
-                    const pScore = this.getScore(this.playerHand);
-                    const dScore = this.getScore(this.dealerHand);
+                    let dScore = this.calcScore(this.dealerHand);
+                    while(dScore < 17) {
+                        await sleep(800);
+                        this.dealerHand.push(this.deck.pop());
+                        this.renderHands(false);
+                        dScore = this.calcScore(this.dealerHand);
+                    }
                     
-                    if (dScore > 21) this.endGame('WIN');
-                    else if (pScore > dScore) this.endGame('WIN');
-                    else if (pScore < dScore) this.endGame('LOSE');
+                    const pScore = this.calcScore(this.playerHand);
+                    
+                    if(dScore > 21) this.endGame('WIN');
+                    else if(pScore > dScore) this.endGame('WIN');
+                    else if(pScore < dScore) this.endGame('LOSE');
                     else this.endGame('PUSH');
                 },
-                renderHands(hideDealer) {
-                    $('#bj-player-cards').innerHTML = this.playerHand.map(c => this.renderCard(c)).join('');
-                    $('#bj-player-score').innerText = this.getScore(this.playerHand);
-                    if(hideDealer && this.gameState === 'PLAY') {
-                         $('#bj-dealer-cards').innerHTML = this.renderCard(this.dealerHand[0]) + this.renderCard(null, true);
-                         $('#bj-dealer-score').innerText = '?'; $('#bj-dealer-score-box').classList.remove('opacity-0');
-                    } else {
-                        $('#bj-dealer-cards').innerHTML = this.dealerHand.map(c => this.renderCard(c)).join('');
-                        $('#bj-dealer-score').innerText = this.getScore(this.dealerHand); $('#bj-dealer-score-box').classList.remove('opacity-0');
-                    }
-                },
+                
                 endGame(res) {
-                    this.gameState = 'OVER'; 
-                    this.renderHands(false); 
+                    this.gameActive = false;
                     $('#bj-controls-play').classList.add('hidden');
-                    setTimeout(() => { $('#bj-controls-bet').classList.remove('hidden'); }, 1500);
+                    setTimeout(() => {
+                         $('#bj-controls-bet').classList.remove('hidden');
+                    }, 1500);
                     
                     const msgEl = $('#bj-msg');
-                    let resultText = '';
-                    let resultClass = '';
-                    let payout = 0;
                     
-                    if(res === 'WIN' || (!res && (this.getScore(this.playerHand) > this.getScore(this.dealerHand) || this.getScore(this.dealerHand) > 21))) {
-                        if (this.getScore(this.playerHand) === 21 && this.playerHand.length === 2) {
-                             payout = Math.floor(this.currentBet * 2.5);
-                             resultText = "Blackjack!";
-                        } else {
-                             payout = this.currentBet * 2;
-                             resultText = "YOU WIN!";
-                        }
-                        resultClass = "text-gold";
+                    if(res === 'WIN') {
+                        const winAmt = this.betAmount * 2;
+                        app.processGameEnd(winAmt, this.betAmount, 'Blackjack');
+                        msgEl.innerText = "YOU WIN!";
+                        msgEl.className = "font-serif text-3xl italic text-green-400 shadow-black drop-shadow-lg";
                     } else if (res === 'BUST') {
-                        resultText = "BUST!"; resultClass = "text-red-500";
-                    } else if (res === 'LOSE' || (!res && this.getScore(this.playerHand) < this.getScore(this.dealerHand))) {
-                        resultText = "DEALER WINS"; resultClass = "text-red-500";
+                        app.processGameEnd(0, this.betAmount, 'Blackjack');
+                        msgEl.innerText = "BUST!";
+                        msgEl.className = "font-serif text-3xl italic text-red-500 shadow-black drop-shadow-lg";
+                    } else if (res === 'LOSE') {
+                        app.processGameEnd(0, this.betAmount, 'Blackjack');
+                        msgEl.innerText = "DEALER WINS";
+                        msgEl.className = "font-serif text-3xl italic text-red-500 shadow-black drop-shadow-lg";
                     } else {
-                        payout = this.currentBet;
-                        resultText = "PUSH"; resultClass = "text-gray-300";
+                        app.processGameEnd(this.betAmount, this.betAmount, 'Blackjack');
+                        msgEl.innerText = "PUSH";
+                        msgEl.className = "font-serif text-3xl italic text-gray-300 shadow-black drop-shadow-lg";
                     }
-                    
-                    msgEl.innerText = resultText;
-                    msgEl.className = `font-serif text-3xl italic ${resultClass} shadow-black drop-shadow-lg`;
                     msgEl.style.opacity = '1';
-                    
-                    app.processGameEnd(payout, this.currentBet, 'Blackjack');
                 }
             },
 
             slots: {
                 isSpinning: false,
                 symbols: [
-                    { id: '7', char: '7', class: 'symbol-7' }, { id: 'diamond', char: '💎', class: 'symbol-diamond' },
-                    { id: 'crown', char: '👑', class: 'symbol-crown' }, { id: 'grape', char: '🍇', class: 'symbol-grape' },
-                    { id: 'bell', char: '🔔', class: 'symbol-bell' }, { id: 'cherry', char: '🍒', class: 'symbol-cherry' },
-                    { id: 'star', char: '⭐', class: 'symbol-star' }, { id: 'lemon', char: '🍋', class: 'symbol-lemon' }
+                    {id:'7', html:'<div class="reel-symbol symbol-7">7</div>', val: 5},
+                    {id:'bell', html:'<div class="reel-symbol symbol-bell">🔔</div>', val: 3},
+                    {id:'star', html:'<div class="reel-symbol symbol-star">⭐</div>', val: 4},
+                    {id:'dia', html:'<div class="reel-symbol symbol-diamond">💎</div>', val: 2},
+                    {id:'crown', html:'<div class="reel-symbol symbol-crown">👑</div>', val: 6}
                 ],
+                
                 reset() {
                     this.isSpinning = false;
-                    $('#slot-msg').innerText = "Prêt?"; $('#slot-msg').className = "font-serif text-2xl text-purple-200 italic";
-                    $('#slot-sub').innerText = "Spin to Win"; $('.win-line').style.display = 'none'; $('#slot-bet-input').disabled = false;
-                },
-                async spin() {
-                    if(this.isSpinning) return;
-                    const bet = parseInt($('#slot-bet-input').value);
-                    if(!app.checkBalance(bet)) return;
-                    
-                    this.isSpinning = true; 
-                    app.deductBet(bet);
-                    
+                    $('#slot-msg').innerText = "Prêt?";
+                    $('#slot-sub').innerText = "Spin to Win";
+                    $('#slot-msg-area').style.opacity = '1';
                     $('.win-line').style.display = 'none';
-                    $('#btn-spin').disabled = true; $('#slot-bet-input').disabled = true;
+                    $('#btn-spin').disabled = false;
+                    $('#btn-spin').style.opacity = '1';
+                },
+                
+                async spin() {
+                    const amount = parseInt($('#slot-bet-input').value);
+                    if(!app.checkBalance(amount)) return;
                     
-                    const reels = [$('#reel-1'), $('#reel-2'), $('#reel-3')]; const results = [];
+                    this.isSpinning = true;
+                    app.user.score -= amount;
+                    app.animateBalance(app.user.score);
+                    $('#btn-spin').disabled = true;
+                    $('#btn-spin').style.opacity = '0.5';
+                    $('#slot-msg-area').style.opacity = '0';
+                    $('.win-line').style.display = 'none';
                     
-                    for(let i=0; i<3; i++) { setTimeout(() => app.audio.playSlotSpin(), i * 150); }
-
+                    app.audio.playSlotSpin();
+                    
+                    const reels = [$('#reel-1'), $('#reel-2'), $('#reel-3')];
+                    const result = [];
+                    
+                    // Start spin animation
                     reels.forEach(r => {
-                        r.innerHTML = ''; 
-                        for(let i=0; i<20; i++) {
-                            const randSym = this.symbols[Math.floor(Math.random() * this.symbols.length)];
-                            const div = document.createElement('div'); div.className = `reel-symbol ${randSym.class}`; div.innerText = randSym.char;
-                            r.appendChild(div);
-                        }
-                        r.style.transition = 'none'; r.style.transform = 'translateY(0)';
+                        r.style.transition = 'none';
+                        r.style.transform = 'translateY(0)';
+                        // Fill reel with random symbols for blur effect
+                        r.innerHTML = Array(20).fill(0).map(() => 
+                            this.symbols[Math.floor(Math.random()*this.symbols.length)].html
+                        ).join('');
+                        
+                        // Force reflow
                         void r.offsetWidth;
+                        
                         r.style.transition = 'transform 2s cubic-bezier(0.2, 0.8, 0.2, 1)';
                         r.style.transform = 'translateY(-1500px)';
                     });
                     
+                    // Determine result
                     for(let i=0; i<3; i++) {
                         await sleep(500 + i*300);
                         const sym = this.symbols[Math.floor(Math.random()*this.symbols.length)];
-                        results.push({ char: sym.char, type: sym.class });
+                        result.push(sym);
                         
                         const r = reels[i];
-                        r.style.transition = 'none'; r.style.transform = 'translateY(-120px)'; 
-                        
-                        // Render final symbol correctly
-                        r.innerHTML = '';
-                        // Add some symbols for effect, final one in middle
-                        const s1 = this.symbols[Math.floor(Math.random()*this.symbols.length)];
-                        const s3 = this.symbols[Math.floor(Math.random()*this.symbols.length)];
-                        
-                        [s1, sym, s3].forEach(s => {
-                             const d = document.createElement('div'); d.className = `reel-symbol ${s.class || s.type}`; d.innerText = s.char;
-                             r.appendChild(d);
-                        });
+                        r.style.transition = 'none';
+                        r.style.transform = 'translateY(-120px)'; 
+                        r.innerHTML = 
+                            this.symbols[Math.floor(Math.random()*this.symbols.length)].html + 
+                            sym.html + 
+                            this.symbols[Math.floor(Math.random()*this.symbols.length)].html;
                         
                         void r.offsetWidth;
                         r.style.transition = 'transform 0.3s ease-out';
                         r.style.transform = 'translateY(-120px)'; 
+                        
                         app.audio.playSlotStop();
                     }
                     
-                    this.checkWin(results, bet);
-                    this.isSpinning = false; $('#btn-spin').disabled = false; $('#slot-bet-input').disabled = false;
-                },
-                checkWin(res, bet) {
-                    const c1 = res[0].char; const c2 = res[1].char; const c3 = res[2].char;
-                    let win = false; let payout = 0; let msg = "Try Again";
+                    // Check win
+                    const allSame = result[0].id === result[1].id && result[1].id === result[2].id;
+                    const msgEl = $('#slot-msg');
+                    const subEl = $('#slot-sub');
+                    const area = $('#slot-msg-area');
                     
-                    if(c1 === '7' && c2 === '7' && c3 === '7') { win = true; payout = bet * 50; msg = "JACKPOT! (x50)"; } 
-                    else if(c1 === '💎' && c2 === '💎' && c3 === '💎') { win = true; payout = bet * 30; msg = "DIAMOND! (x30)"; } 
-                    else if(c1 === '👑' && c2 === '👑' && c3 === '👑') { win = true; payout = bet * 20; msg = "ROYAL! (x20)"; } 
-                    else if(c1 === c2 && c2 === c3) { win = true; payout = bet * 10; msg = "Big Win! (x10)"; } 
-                    else if(c1 === c2 || c2 === c3 || c1 === c3) { win = true; payout = Math.floor(bet * 1.5); msg = "Petit Win (x1.5)"; } 
-                    else { msg = "Nothing..."; }
+                    if(allSame) {
+                        const winAmt = amount * result[0].val * 5; 
+                        // Fix: Return Stake + Win Amount
+                        // Standard Slot math: Payout = Win Amount. 
+                        // But user request: "cộng cả tiền cược + tiền thắng".
+                        // Assuming the multiplier implies "Profit Multiplier" or user wants stake returned on top of win.
+                        // Let's assume standard behavior: Payout = Total Return. 
+                        // If multiplier is 5x, Payout is 5x. Profit is 4x.
+                        // User complained "chỉ cộng mỗi tiền thắng" -> implies logic was mistakenly just adding profit.
+                        // Let's treat the calculated 'winAmt' as the total payout.
+                        // AND ensuring we credit the full payout to the wallet.
+                        
+                        app.processGameEnd(winAmt, amount, 'Slots');
+                        msgEl.innerText = "JACKPOT!";
+                        msgEl.className = "font-serif text-3xl italic text-gold";
+                        subEl.innerText = `Win $ ${winAmt.toLocaleString()}`;
+                        $('.win-line').style.display = 'block';
+                        app.triggerWinFx(winAmt);
+                    } else if (result[0].id === result[1].id || result[1].id === result[2].id || result[0].id === result[2].id) {
+                         // Small win for pair
+                         const winAmt = Math.floor(amount * 1.5);
+                         app.processGameEnd(winAmt, amount, 'Slots');
+                         msgEl.innerText = "NICE!";
+                         msgEl.className = "font-serif text-3xl italic text-purple-300";
+                         subEl.innerText = `Win $ ${winAmt.toLocaleString()}`;
+                    } else {
+                        app.processGameEnd(0, amount, 'Slots');
+                        msgEl.innerText = "Try Again";
+                        msgEl.className = "font-serif text-2xl italic text-gray-400";
+                        subEl.innerText = "";
+                    }
                     
-                    app.processGameEnd(payout, bet, 'Slots');
-                    
-                    $('#slot-msg').innerText = msg;
-                    $('#slot-msg').className = win ? "font-serif text-3xl text-gold italic animate-bounce" : "font-serif text-2xl text-gray-500 italic";
-                    $('#slot-sub').innerText = win ? `+$ ${payout.toLocaleString()} Points` : ``;
-                    if(win && payout > bet * 5) $('.win-line').style.display = 'block';
+                    area.style.opacity = '1';
+                    this.isSpinning = false;
+                    $('#btn-spin').disabled = false;
+                    $('#btn-spin').style.opacity = '1';
                 }
             },
             
             treasure: {
-                isPlaying: false, holes: [], betAmount: 0,
-                init() { this.renderMap(); },
+                isPlaying: false,
+                holes: [],
+                betAmount: 0,
+
+                init() {
+                    this.renderMap();
+                },
+
                 renderMap() {
-                    const land = $('#treasure-land'); land.innerHTML = '';
+                    const land = $('#treasure-land');
+                    land.innerHTML = '';
                     this.holes.forEach((h, index) => {
-                        const el = document.createElement('div'); el.className = 'x-mark';
-                        el.style.left = h.x + '%'; el.style.top = h.y + '%'; el.innerHTML = 'X';
+                        const el = document.createElement('div');
+                        el.className = 'x-mark';
+                        el.style.left = h.x + '%';
+                        el.style.top = h.y + '%';
+                        el.innerHTML = 'X';
                         el.onclick = () => this.dig(index, el);
                         land.appendChild(el);
                     });
                 },
+
                 start() {
                     if (this.isPlaying) return;
                     const amount = parseInt($('#treasure-bet-input').value);
@@ -1489,7 +1596,8 @@
 
                     app.audio.playClick();
                     this.betAmount = amount;
-                    app.deductBet(amount);
+                    app.user.score -= amount;
+                    app.animateBalance(app.user.score);
                     this.isPlaying = true;
                     
                     $('#btn-treasure-start').classList.add('opacity-30', 'pointer-events-none');
@@ -1498,51 +1606,80 @@
                     $('#treasure-msg').className = "h-8 text-center text-[#e0c080] font-serif italic text-xl transition-opacity";
                     $('#treasure-bet-input').disabled = true;
 
+                    // Generate random holes
                     this.holes = [];
                     const types = ['WIN_36', 'LOSS_100', 'LOSS_100', 'LOSS_50'];
+                    // Shuffle types
                     for (let i = types.length - 1; i > 0; i--) {
                         const j = Math.floor(Math.random() * (i + 1));
                         [types[i], types[j]] = [types[j], types[i]];
                     }
+
+                    // Generate positions preventing overlap
                     for (let i = 0; i < 4; i++) {
                         let x, y, valid = false;
                         while (!valid) {
-                            x = 15 + Math.random() * 70; y = 15 + Math.random() * 70; valid = true;
-                            for (let h of this.holes) { if (Math.hypot(h.x - x, h.y - y) < 20) valid = false; }
+                            x = 15 + Math.random() * 70;
+                            y = 15 + Math.random() * 70;
+                            valid = true;
+                            for (let h of this.holes) {
+                                const dist = Math.hypot(h.x - x, h.y - y);
+                                if (dist < 20) valid = false;
+                            }
                         }
                         this.holes.push({ x, y, type: types[i], revealed: false });
                     }
                     this.renderMap();
                 },
+
                 dig(index, el) {
                     if (!this.isPlaying || this.holes[index].revealed) return;
-                    this.isPlaying = false;
-                    const hole = this.holes[index]; hole.revealed = true;
                     
-                    const land = $('#treasure-land'); const allEls = land.children;
+                    this.isPlaying = false;
+                    const hole = this.holes[index];
+                    hole.revealed = true;
+                    
+                    // Reveal all
+                    const land = $('#treasure-land');
+                    const allEls = land.children;
+
                     for(let i=0; i<4; i++) {
-                        const h = this.holes[i]; const div = allEls[i]; div.style.pointerEvents = 'none';
-                        let icon = ''; let cls = '';
+                        const h = this.holes[i];
+                        const div = allEls[i];
+                        div.style.pointerEvents = 'none';
+                        
+                        let icon = '';
+                        let cls = '';
+                        
                         if (h.type === 'WIN_36') { icon = '👑'; cls = 'res-win'; }
                         else if (h.type === 'LOSS_50') { icon = '💔'; cls = 'res-half'; }
                         else { icon = '💀'; cls = 'res-loss'; }
+                        
                         div.innerHTML = `<div class="hole-revealed ${cls}">${icon}</div>`;
                     }
 
                     const msgEl = $('#treasure-msg');
                     
                     if (hole.type === 'WIN_36') {
+                        // Win x36: Payout = Bet * 36
                         const payout = this.betAmount * 36;
                         app.processGameEnd(payout, this.betAmount, 'Treasure Hunt');
+                        
                         msgEl.innerText = "JACKPOT x36!";
                         msgEl.className = "h-8 text-center text-gold font-serif italic text-3xl font-bold drop-shadow-md";
+                        app.triggerWinFx(payout);
                     } else if (hole.type === 'LOSS_50') {
+                        // Loss 50%: User gets back 50% of bet
                         const payout = Math.floor(this.betAmount * 0.5);
                         app.processGameEnd(payout, this.betAmount, 'Treasure Hunt');
-                        msgEl.innerText = "Broken Heart (-50%)";
+                        
+                        msgEl.innerText = "Lost 50%";
                         msgEl.className = "h-8 text-center text-pink-400 font-serif italic text-xl";
+                        app.triggerLoseFx(this.betAmount - payout);
                     } else {
+                        // Loss 100%: User gets back 0
                         app.processGameEnd(0, this.betAmount, 'Treasure Hunt');
+                        
                         msgEl.innerText = "Busted!";
                         msgEl.className = "h-8 text-center text-red-500 font-serif italic text-xl";
                         app.audio.playLose();
@@ -1555,20 +1692,235 @@
                 }
             },
 
-            processGameEnd(payout, bet, game) {
-                this.user.score += payout;
-                this.updateBalanceUI(true); // Animate update
-                
-                const pnl = payout - bet;
-                this.user.history.push({ date: Date.now(), amount: pnl, game: game });
-                if(this.user.history.length > 200) this.user.history.shift();
-                this.saveUser();
-                
-                // Fire API immediately
-                this.api.sendTx(pnl, game);
-                
-                if (pnl > 0) this.triggerWinFx(pnl);
-                else if (pnl < 0) this.triggerLoseFx(Math.abs(pnl));
+            leaderboard: {
+                activeTab: 'global',
+                switchTab(tab) {
+                    app.audio.playClick();
+                    this.activeTab = tab;
+                    $$('#view-leaderboard button[id^="tab-"]').forEach(b => {
+                        b.className = 'flex-1 py-2 text-xs uppercase tracking-wider border-b border-transparent text-gray-500';
+                    });
+                    $(`#tab-${tab}`).className = 'flex-1 py-2 text-xs uppercase tracking-wider border-b border-gold text-gold';
+                    this.render(tab);
+                },
+                async render(tab, silent=false) {
+                    const list = $('#lb-list');
+                    if(!silent) list.innerHTML = '<div class="text-center text-gray-500 text-xs py-4">Loading...</div>';
+                    
+                    const data = await app.api.loadLeaderboard(tab);
+                    if(data && data.items) {
+                        list.innerHTML = data.items.map((it, idx) => {
+                            if (tab === 'streak') {
+                                const win = it.amount >= 0;
+                                return `
+                                <div class="rank-row flex items-center justify-between py-2">
+                                    <div class="flex items-center gap-3">
+                                        <div class="text-xs font-mono text-gray-500 w-4">${idx+1}</div>
+                                        <div>
+                                            <div class="text-sm font-bold text-gray-200">${it.name}</div>
+                                            <div class="text-[9px] text-gray-500 uppercase">${it.game}</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-mono text-xs font-bold ${win?'text-green-400':'text-red-400'}">${win?'+':''}$ ${Math.abs(it.amount).toLocaleString()}</div>
+                                        <div class="text-[9px] text-gray-600">Now</div>
+                                    </div>
+                                </div>`;
+                            } else {
+                                const isTop = idx < 3;
+                                const rankColor = idx === 0 ? 'text-yellow-400' : idx === 1 ? 'text-gray-300' : idx === 2 ? 'text-amber-600' : 'text-gray-600';
+                                return `
+                                <div class="rank-row flex items-center justify-between py-3">
+                                    <div class="flex items-center gap-3">
+                                        <div class="font-serif text-lg font-bold w-6 text-center ${rankColor}">${idx+1}</div>
+                                        <div class="text-sm font-bold text-gray-200">${it.name}</div>
+                                    </div>
+                                    <div class="font-mono text-gold text-sm">$ ${it.score.toLocaleString()}</div>
+                                </div>`;
+                            }
+                        }).join('');
+                    } else {
+                        list.innerHTML = '<div class="text-center text-gray-500 text-xs py-4">No data</div>';
+                    }
+                }
+            },
+
+            feed: {
+                async init() {
+                    this.update();
+                    setInterval(() => this.update(), 8000); 
+                },
+
+                async update() {
+                    const data = await app.api.loadLeaderboard('streak');
+                    if(data && data.items && data.items.length > 0) {
+                        const realPlayers = data.items.slice(0, 3); 
+                        this.render(realPlayers);
+                    }
+                },
+
+                render(items) {
+                    const container = $('#live-feed-list');
+                    if(!container) return;
+                    
+                    container.innerHTML = items.map(i => {
+                        const win = i.amount >= 0;
+                        const amountClass = win ? "text-green-400" : "text-red-400";
+                        const sign = win ? "+" : "";
+                        const icon = win ? "↗" : "↘";
+                        const time = "Mới đây"; 
+                        
+                        return `
+                        <div class="feed-item p-3 flex justify-between items-center hover:bg-white/5 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[10px] text-gray-400 font-serif">
+                                    ${i.name.charAt(0)}
+                                </div>
+                                <div>
+                                    <p class="text-xs font-bold text-gray-200">${i.name}</p>
+                                    <p class="text-[9px] text-gray-500 uppercase tracking-wide">${i.game} • ${time}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs font-mono font-bold ${amountClass}">${sign}$ ${Math.abs(i.amount).toLocaleString()}</p>
+                                <p class="text-[9px] text-gray-600">${win ? 'WIN' : 'LOST'} ${icon}</p>
+                            </div>
+                        </div>
+                        `;
+                    }).join('');
+                }
+            },
+
+            profile: {
+                activeTab: 'bank',
+                historyInterval: null,
+                switchTab(tab) {
+                    app.audio.playClick();
+                    this.activeTab = tab;
+                    $$('[id^="pf-content-"]').forEach(el => el.classList.add('hidden'));
+                    $$('[id^="pf-tab-"]').forEach(el => {
+                        el.className = 'flex-1 py-2 text-xs uppercase tracking-wider text-gray-500';
+                    });
+                    
+                    $(`#pf-content-${tab}`).classList.remove('hidden');
+                    $(`#pf-tab-${tab}`).className = 'flex-1 py-2 text-xs uppercase tracking-wider text-gold font-bold border-b-2 border-gold';
+                    
+                    if(this.historyInterval) clearInterval(this.historyInterval);
+
+                    if (tab === 'bank') {
+                        this.loadBank();
+                        this.historyInterval = setInterval(() => this.loadBank(true), 3000);
+                    }
+                    if (tab === 'perf') app.pnl.render();
+                },
+                async loadBank(silent = false) {
+                    const res = await fetch(app.apiBase + '/transfer?type=history', {
+                         headers: { 'Authorization': 'Bearer ' + app.sessionToken }
+                    });
+                    const data = await res.json();
+                    const list = $('#tx-history-list');
+                    if (!silent) list.innerHTML = '<div class="p-4 text-center text-xs text-gray-600 italic">Đang tải...</div>';
+                    
+                    if(data.ok && data.items && data.items.length > 0) {
+                        const html = data.items.map(t => {
+                            const isSend = String(t.sender_id) === String(app.user.id.replace('U',''));
+                            const isReceive = !isSend;
+                            
+                            const amountCls = isReceive ? "text-green-400" : "text-red-400";
+                            const iconCls = isReceive ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500";
+                            const arrow = isReceive ? "↓" : "↑";
+                            const sign = isReceive ? "+" : "-";
+                            
+                            const label = isReceive ? `Nhận từ: ${t.sender_name}` : `Gửi đến: ${t.receiver_name}`;
+                            const date = new Date(t.created_at * 1000).toLocaleString('vi-VN');
+
+                            return `
+                            <div class="flex items-center justify-between p-3 border-b border-white/5 bg-white/5 rounded-lg mb-2 hover:bg-white/10 transition-colors">
+                                <div class="flex items-center gap-3">
+                                     <div class="w-8 h-8 rounded-full ${iconCls} flex items-center justify-center font-bold text-sm">
+                                         ${arrow}
+                                     </div>
+                                     <div>
+                                         <p class="text-xs font-bold text-gray-200 font-serif">${label}</p>
+                                         <p class="text-[9px] text-gray-500 font-mono mt-0.5">TX: ${t.tx_code}</p>
+                                     </div>
+                                </div>
+                                <div class="text-right">
+                                     <p class="font-mono font-bold text-sm ${amountCls}">
+                                         ${sign}$ ${t.amount.toLocaleString()}
+                                     </p>
+                                     <p class="text-[9px] text-gray-500">${date}</p>
+                                </div>
+                            </div>`;
+                        }).join('');
+                        
+                        if (list.innerHTML !== html) list.innerHTML = html;
+                    } else {
+                        if (!silent) list.innerHTML = `<div class="p-4 text-center text-xs text-gray-600 italic">Chưa có giao dịch nào</div>`;
+                    }
+                },
+                async checkUser() {
+                    const val = $('#tx-receiver').value.trim();
+                    const preview = $('#rx-preview');
+                    const loader = $('#rx-check-loading');
+                    
+                    if(!val) { preview.innerText = ''; return; }
+                    
+                    loader.classList.remove('hidden');
+                    try {
+                        const res = await fetch(app.apiBase + '/transfer?type=check&q=' + encodeURIComponent(val), {
+                             headers: { 'Authorization': 'Bearer ' + app.sessionToken }
+                        });
+                        const data = await res.json();
+                        loader.classList.add('hidden');
+                        
+                        if(data.ok) {
+                            preview.innerHTML = `<span class="text-green-500">✓ Tìm thấy:</span> <span class="text-gold font-bold">${data.name}</span> (ID: ${data.id})`;
+                        } else {
+                             preview.innerHTML = `<span class="text-red-500">✗ Không tìm thấy người dùng này</span>`;
+                        }
+                    } catch(e) {
+                        loader.classList.add('hidden');
+                    }
+                },
+                async sendMoney() {
+                    app.audio.playClick();
+                    const receiver = $('#tx-receiver').value.trim();
+                    const amount = parseInt($('#tx-amount').value);
+                    if(!receiver || !amount) return alert("Vui lòng nhập đủ thông tin");
+                    
+                    const btn = event.target; btn.disabled = true; btn.innerText = "ĐANG XỬ LÝ...";
+                    
+                    try {
+                        const res = await fetch(app.apiBase + '/transfer', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + app.sessionToken },
+                            body: JSON.stringify({ receiver, amount })
+                        });
+                        const data = await res.json();
+                        
+                        if(data.ok) {
+                            app.animateBalance(data.newBalance);
+                            app.user.score = data.newBalance;
+                            this.showBill(data);
+                            setTimeout(() => this.loadBank(), 500); 
+                            $('#tx-receiver').value = ''; $('#tx-amount').value = ''; $('#rx-preview').innerText = '';
+                        } else {
+                            alert(data.error || "Lỗi giao dịch");
+                        }
+                    } catch(e) { alert("Lỗi kết nối"); }
+                    btn.disabled = false; btn.innerText = "XÁC NHẬN CHUYỂN";
+                },
+                showBill(data) {
+                    $('#bill-id').innerText = '#' + (data.txCode || data.txId || '0000');
+                    $('#bill-date').innerText = new Date(data.date).toLocaleString('vi-VN');
+                    $('#bill-sender').innerText = data.sender;
+                    $('#bill-receiver').innerText = data.receiver;
+                    $('#bill-amount').innerText = '$ ' + data.amount.toLocaleString();
+                    
+                    app.audio.playWin();
+                    $('#bill-modal').classList.add('active');
+                }
             },
 
             trading: {
@@ -1762,7 +2114,8 @@
                     document.getElementById('trade-timer-overlay').classList.remove('hidden');
                     document.getElementById('trade-pnl-live').classList.remove('hidden');
                     
-                    app.deductBet(bet);
+                    app.user.score -= bet;
+                    this.updateStaticBalance();
                 },
                 
                 closeOrder(pnl) {
@@ -2094,6 +2447,305 @@
                 }
             },
 
+            init() {
+                this.loadUser();
+                this.createParticles();
+                this.initFxCanvas();
+                this.audio.init();
+                this.feed.init(); 
+                if(this.user.name) {
+                    $('#inp-name').value = this.user.name;
+                    this.switchView('view-hall');
+                    this.updateDash();
+                }
+                
+                this.trading.init();
+                
+                this.animLoop();
+                setInterval(() => this.syncData(), 2000);
+                setInterval(() => this.leaderboard.render(this.leaderboard.activeTab, true), 10000);
+                
+                const rxInput = $('#tx-receiver');
+                if(rxInput) {
+                    let timeout = null;
+                    rxInput.addEventListener('keyup', () => {
+                        clearTimeout(timeout);
+                        timeout = setTimeout(() => this.profile.checkUser(), 500);
+                    });
+                }
+            },
+
+            initFxCanvas() {
+                this.fxCanvas = $('#fx-canvas');
+                this.fxCanvas.width = window.innerWidth;
+                this.fxCanvas.height = window.innerHeight;
+                this.fxCtx = this.fxCanvas.getContext('2d');
+                window.addEventListener('resize', () => {
+                    this.fxCanvas.width = window.innerWidth;
+                    this.fxCanvas.height = window.innerHeight;
+                });
+            },
+
+            setUserFromServer(data) {
+                if(!data || !data.user || !data.token) return;
+                const u = data.user;
+                this.user.name = u.name;
+                this.user.id = 'U' + u.id;
+                this.user.score = u.score;
+                this.user.history = Array.isArray(u.history) ? u.history : [];
+                this.user.totalWins = typeof u.totalWins === 'number' ? u.totalWins : 0;
+                this.user.bestWin = typeof u.bestWin === 'number' ? u.bestWin : 0;
+                this.sessionToken = data.token;
+                this.saveUser();
+            },
+
+            switchView(id) {
+                app.audio.playClick();
+                
+                if(app.profile.historyInterval) {
+                    clearInterval(app.profile.historyInterval);
+                    app.profile.historyInterval = null;
+                }
+
+                $$('.view-section').forEach(el => {
+                    el.classList.remove('active');
+                    el.style.pointerEvents = 'none';
+                });
+                
+                const mainApp = document.getElementById('app');
+                if(id === 'view-trading') {
+                     mainApp.classList.remove('max-w-md');
+                     mainApp.classList.add('full-screen-mode'); 
+                } else {
+                     mainApp.classList.add('max-w-md');
+                     mainApp.classList.remove('full-screen-mode');
+                }
+                
+                setTimeout(() => {
+                    $(`#${id}`).classList.add('active');
+                    $(`#${id}`).style.pointerEvents = 'auto';
+                    
+                    if(id === 'view-trading' && app.trading.chartCtx) {
+                         const cvs = document.getElementById('tradeChart');
+                         const rect = cvs.parentElement.getBoundingClientRect();
+                         setTimeout(() => {
+                             const dpr = window.devicePixelRatio || 1;
+                             cvs.width = rect.width * dpr;
+                             cvs.height = rect.height * dpr;
+                             app.trading.chartCtx.scale(dpr, dpr);
+                         }, 50);
+                    }
+                    if(id === 'view-treasure') {
+                        app.treasure.init();
+                    }
+                }, 100); 
+            },
+
+            logout() {
+                app.audio.playClick();
+                if(confirm("Exit Salon?")) {
+                    localStorage.removeItem('salon_user');
+                    location.reload();
+                }
+            },
+
+            updateDash() {
+                $('#dash-name').textContent = this.user.name;
+                $('#dash-id').textContent = this.user.id;
+                const scoreStr = '$ ' + this.user.score.toLocaleString();
+                $('#dash-score').textContent = scoreStr;
+                $('#bank-balance').textContent = scoreStr; 
+                $$('.user-balance-display').forEach(el => el.textContent = scoreStr);
+            },
+
+            saveUser() {
+                const payload = { user: this.user, token: this.sessionToken };
+                localStorage.setItem('salon_user', JSON.stringify(payload));
+                this.updateDash();
+            },
+
+            loadUser() {
+                const data = localStorage.getItem('salon_user');
+                if(data) {
+                    try {
+                        const obj = JSON.parse(data);
+                        if(obj && obj.user) {
+                            this.user = obj.user;
+                            this.sessionToken = obj.token || null;
+                        } else {
+                            this.user = obj;
+                        }
+                    } catch(e) {}
+                    if(!this.user.history) this.user.history = [];
+                }
+            },
+
+            processGameEnd(payout, bet, game) {
+                const pnl = payout - bet;
+                this.user.score += payout; 
+                
+                // History logs profit/loss (not total payout)
+                this.user.history.push({ date: Date.now(), amount: pnl, game: game });
+                if(this.user.history.length > 200) this.user.history.shift();
+                this.saveUser();
+                
+                this.api.sendTx(pnl, game);
+                
+                app.animateBalance(this.user.score);
+            },
+
+            // Legacy support for non-game transaction (like transfer)
+            recordTx(amount, game) {
+                // This method blindly adds amount to score. Used for transfers.
+                // Not used for games anymore to avoid the double-deduction logic confusion.
+                this.user.score += amount;
+                this.user.history.push({ date: Date.now(), amount: amount, game: game });
+                if(this.user.history.length > 200) this.user.history.shift();
+                this.saveUser();
+                this.api.sendTx(amount, game);
+                app.animateBalance(this.user.score);
+            },
+
+            triggerWinFx(amount) {
+                app.audio.playWin();
+                const overlay = $('#fx-overlay');
+                overlay.className = 'fx-flash-gold absolute inset-0 z-[9998] flex items-center justify-center';
+                const text = document.createElement('div');
+                text.className = 'float-text text-gold';
+                text.innerText = `+$ ${amount.toLocaleString()}`;
+                overlay.appendChild(text);
+                this.spawnConfetti();
+                setTimeout(() => {
+                    overlay.className = 'absolute inset-0 z-[9998] flex items-center justify-center pointer-events-none';
+                    if(text.parentNode) text.parentNode.removeChild(text);
+                }, 1000);
+            },
+
+            triggerLoseFx(amount) {
+                app.audio.playLose();
+                const appEl = $('#app');
+                const overlay = $('#fx-overlay');
+                appEl.classList.remove('fx-screen-shake');
+                void appEl.offsetWidth; 
+                appEl.classList.add('fx-screen-shake');
+                overlay.className = 'fx-flash-red absolute inset-0 z-[9998] flex items-center justify-center';
+                const text = document.createElement('div');
+                text.className = 'float-text text-red-500';
+                text.innerText = `$ ${amount.toLocaleString()}`;
+                overlay.appendChild(text);
+                setTimeout(() => {
+                    overlay.className = 'absolute inset-0 z-[9998] flex items-center justify-center pointer-events-none';
+                    if(text.parentNode) text.parentNode.removeChild(text);
+                    appEl.classList.remove('fx-screen-shake');
+                }, 1000);
+            },
+
+            spawnConfetti() {
+                const colors = ['#D1B27C', '#F8F5EF', '#FFD700', '#FFFFFF'];
+                for(let i=0; i<100; i++) {
+                    this.particles.push({
+                        x: window.innerWidth / 2, y: window.innerHeight / 2,
+                        vx: (Math.random() - 0.5) * 15, vy: (Math.random() - 0.5) * 15,
+                        size: Math.random() * 8 + 4, color: colors[Math.floor(Math.random()*colors.length)],
+                        rotation: Math.random() * 360, rotationSpeed: (Math.random() - 0.5) * 10,
+                        life: 1.5, gravity: 0.2
+                    });
+                }
+            },
+
+            animLoop() {
+                const ctx = this.fxCtx;
+                if(ctx) {
+                    ctx.clearRect(0, 0, this.fxCanvas.width, this.fxCanvas.height);
+                    for(let i = this.particles.length - 1; i >= 0; i--) {
+                        let p = this.particles[i];
+                        p.x += p.vx; p.y += p.vy; p.vy += p.gravity || 0; p.vx *= 0.95; 
+                        p.rotation += p.rotationSpeed; p.life -= 0.015;
+                        if(p.life <= 0) { this.particles.splice(i, 1); continue; }
+                        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rotation * Math.PI / 180);
+                        ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
+                        ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size); ctx.restore();
+                    }
+                }
+                requestAnimationFrame(() => this.animLoop());
+            },
+
+            gotoGame(type) {
+                app.audio.playClick();
+                if(type === 'taixiu') { this.taixiu.reset(); this.switchView('view-taixiu'); } 
+                else if(type === 'blackjack') { this.blackjack.reset(); this.switchView('view-blackjack'); } 
+                else if(type === 'slots') { this.slots.reset(); this.switchView('view-slots'); } 
+                else if(type === 'trading') { this.switchView('view-trading'); }
+                else if(type === 'treasure') { this.switchView('view-treasure'); }
+            },
+
+            showProfile() {
+                app.audio.playClick();
+                app.profile.switchTab('bank');
+                this.switchView('view-profile');
+            },
+
+            showLeaderboard() {
+                app.audio.playClick();
+                this.leaderboard.switchTab('global');
+                this.switchView('view-leaderboard');
+            },
+
+            pnl: {
+                render() { this.renderChart(); this.renderCalendar(); this.renderStats(); },
+                renderChart() {
+                    if(app.chartInstance) app.chartInstance.destroy();
+                    const ctx = $('#pnlChart').getContext('2d');
+                    const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
+                    let running = 0; let todayTotal = 0;
+                    const data = [{x: 'Start', y: 0}];
+                    app.user.history.forEach(tx => {
+                        if(tx.date >= startOfDay.getTime()) {
+                            running += tx.amount; todayTotal += tx.amount;
+                            data.push({ x: new Date(tx.date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), y: running });
+                        }
+                    });
+                    $('#pnl-today-val').innerText = (todayTotal>=0?'+':'') + '$ ' + todayTotal.toLocaleString();
+                    $('#pnl-today-val').className = `font-mono text-sm ${todayTotal>=0?'text-green-400':'text-red-400'}`;
+                    const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+                    gradient.addColorStop(0, 'rgba(209, 178, 124, 0.4)'); gradient.addColorStop(1, 'rgba(209, 178, 124, 0)');
+                    app.chartInstance = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.map(d=>d.x),
+                            datasets: [{
+                                label: 'PNL', data: data.map(d=>d.y), borderColor: '#D1B27C', borderWidth: 2,
+                                backgroundColor: gradient, fill: true, pointBackgroundColor: '#F8F5EF', pointBorderColor: '#D1B27C', pointRadius: 3, tension: 0.4 
+                            }]
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            plugins: { legend: {display: false}, tooltip: { mode: 'index', intersect: false } },
+                            scales: { x: { display: false }, y: { grid: {color:'rgba(255,255,255,0.05)', drawBorder: false}, ticks: {color:'#666', font: {size: 10}} } },
+                            interaction: { mode: 'nearest', axis: 'x', intersect: false }
+                        }
+                    });
+                },
+                renderCalendar() {
+                    const el = $('#pnl-calendar'); el.innerHTML = '';
+                    const daily = {}; const now = new Date();
+                    for(let i=29; i>=0; i--) { const d = new Date(now); d.setDate(d.getDate() - i); daily[d.toISOString().split('T')[0]] = 0; }
+                    app.user.history.forEach(tx => { const k = new Date(tx.date).toISOString().split('T')[0]; if(daily[k] !== undefined) daily[k] += tx.amount; });
+                    Object.keys(daily).sort().forEach(k => {
+                        const div = document.createElement('div'); const dayNum = k.split('-')[2]; div.className = 'cal-day';
+                        if(k === now.toISOString().split('T')[0]) div.classList.add('today');
+                        if(daily[k] > 0) div.classList.add('win'); if(daily[k] < 0) div.classList.add('loss');
+                        div.innerText = dayNum; if(daily[k] !== 0) div.title = `${daily[k] > 0 ? '+' : ''}$ ${daily[k].toLocaleString()}`;
+                        el.appendChild(div);
+                    });
+                },
+                renderStats() {
+                    const wins = (typeof app.user.totalWins === 'number') ? app.user.totalWins : app.user.history.filter(t => t.amount > 0).length;
+                    const max = (typeof app.user.bestWin === 'number') ? app.user.bestWin : app.user.history.reduce((m,t) => Math.max(m, t.amount), 0);
+                    $('#stat-wins').innerText = wins; $('#stat-max').innerText = '$ ' + max.toLocaleString();
+                }
+            },
+            
             createParticles() {
                 const container = $('#particles');
                 for(let i=0; i<20; i++) {
