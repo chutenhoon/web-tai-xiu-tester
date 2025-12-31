@@ -1230,7 +1230,7 @@
                     
                     this.isRolling = true;
                     app.user.score -= amount;
-                    app.animateBalance(app.user.score);
+                    // Note: Balance is deducted internally but animateBalance is NOT called here.
                     
                     app.audio.playRoll();
                     const dice = [$('#die-1'), $('#die-2'), $('#die-3')];
@@ -1263,6 +1263,7 @@
                         app.processGameEnd(payout, amount, 'Tai Xiu');
                         msgEl.innerText = "CHIẾN THẮNG!";
                         msgEl.className = "font-serif text-3xl italic text-green-400";
+                        app.triggerWinFx(payout - amount);
                     } else {
                         app.processGameEnd(0, amount, 'Tai Xiu');
                         msgEl.innerText = "THẤT BẠI";
@@ -1343,7 +1344,7 @@
                     app.audio.playClick();
                     this.betAmount = amount;
                     app.user.score -= amount;
-                    app.animateBalance(app.user.score);
+                    // Balance deducted internally, UI stays static
                     
                     this.deck = this.createDeck();
                     this.playerHand = [this.deck.pop(), this.deck.pop()];
@@ -1426,10 +1427,15 @@
                     const msgEl = $('#bj-msg');
                     
                     if(res === 'WIN') {
-                        const winAmt = this.betAmount * 2;
-                        app.processGameEnd(winAmt, this.betAmount, 'Blackjack');
-                        msgEl.innerText = "YOU WIN!";
+                        // Regular win 1:1, return bet + profit
+                        const pScore = this.calcScore(this.playerHand);
+                        const isBJ = pScore === 21 && this.playerHand.length === 2;
+                        const payout = isBJ ? this.betAmount * 2.5 : this.betAmount * 2;
+                        
+                        app.processGameEnd(payout, this.betAmount, 'Blackjack');
+                        msgEl.innerText = isBJ ? "BLACKJACK!" : "YOU WIN!";
                         msgEl.className = "font-serif text-3xl italic text-green-400 shadow-black drop-shadow-lg";
+                        app.triggerWinFx(payout - this.betAmount);
                     } else if (res === 'BUST') {
                         app.processGameEnd(0, this.betAmount, 'Blackjack');
                         msgEl.innerText = "BUST!";
@@ -1439,6 +1445,7 @@
                         msgEl.innerText = "DEALER WINS";
                         msgEl.className = "font-serif text-3xl italic text-red-500 shadow-black drop-shadow-lg";
                     } else {
+                        // Push, return bet
                         app.processGameEnd(this.betAmount, this.betAmount, 'Blackjack');
                         msgEl.innerText = "PUSH";
                         msgEl.className = "font-serif text-3xl italic text-gray-300 shadow-black drop-shadow-lg";
@@ -1473,7 +1480,8 @@
                     
                     this.isSpinning = true;
                     app.user.score -= amount;
-                    app.animateBalance(app.user.score);
+                    // Static balance during spin
+                    
                     $('#btn-spin').disabled = true;
                     $('#btn-spin').style.opacity = '0.5';
                     $('#slot-msg-area').style.opacity = '0';
@@ -1488,14 +1496,10 @@
                     reels.forEach(r => {
                         r.style.transition = 'none';
                         r.style.transform = 'translateY(0)';
-                        // Fill reel with random symbols for blur effect
                         r.innerHTML = Array(20).fill(0).map(() => 
                             this.symbols[Math.floor(Math.random()*this.symbols.length)].html
                         ).join('');
-                        
-                        // Force reflow
                         void r.offsetWidth;
-                        
                         r.style.transition = 'transform 2s cubic-bezier(0.2, 0.8, 0.2, 1)';
                         r.style.transform = 'translateY(-1500px)';
                     });
@@ -1523,30 +1527,20 @@
                     
                     // Check win
                     const allSame = result[0].id === result[1].id && result[1].id === result[2].id;
+                    const pair = result[0].id === result[1].id || result[1].id === result[2].id || result[0].id === result[2].id;
                     const msgEl = $('#slot-msg');
                     const subEl = $('#slot-sub');
                     const area = $('#slot-msg-area');
                     
                     if(allSame) {
-                        const winAmt = amount * result[0].val * 5; 
-                        // Fix: Return Stake + Win Amount
-                        // Standard Slot math: Payout = Win Amount. 
-                        // But user request: "cộng cả tiền cược + tiền thắng".
-                        // Assuming the multiplier implies "Profit Multiplier" or user wants stake returned on top of win.
-                        // Let's assume standard behavior: Payout = Total Return. 
-                        // If multiplier is 5x, Payout is 5x. Profit is 4x.
-                        // User complained "chỉ cộng mỗi tiền thắng" -> implies logic was mistakenly just adding profit.
-                        // Let's treat the calculated 'winAmt' as the total payout.
-                        // AND ensuring we credit the full payout to the wallet.
-                        
+                        const winAmt = amount * result[0].val * 5; // e.g. 5x5 = 25x bet
                         app.processGameEnd(winAmt, amount, 'Slots');
                         msgEl.innerText = "JACKPOT!";
                         msgEl.className = "font-serif text-3xl italic text-gold";
                         subEl.innerText = `Win $ ${winAmt.toLocaleString()}`;
                         $('.win-line').style.display = 'block';
-                        app.triggerWinFx(winAmt);
-                    } else if (result[0].id === result[1].id || result[1].id === result[2].id || result[0].id === result[2].id) {
-                         // Small win for pair
+                        app.triggerWinFx(winAmt - amount);
+                    } else if (pair) {
                          const winAmt = Math.floor(amount * 1.5);
                          app.processGameEnd(winAmt, amount, 'Slots');
                          msgEl.innerText = "NICE!";
@@ -1597,7 +1591,7 @@
                     app.audio.playClick();
                     this.betAmount = amount;
                     app.user.score -= amount;
-                    app.animateBalance(app.user.score);
+                    // Balance static
                     this.isPlaying = true;
                     
                     $('#btn-treasure-start').classList.add('opacity-30', 'pointer-events-none');
@@ -1606,16 +1600,13 @@
                     $('#treasure-msg').className = "h-8 text-center text-[#e0c080] font-serif italic text-xl transition-opacity";
                     $('#treasure-bet-input').disabled = true;
 
-                    // Generate random holes
                     this.holes = [];
                     const types = ['WIN_36', 'LOSS_100', 'LOSS_100', 'LOSS_50'];
-                    // Shuffle types
                     for (let i = types.length - 1; i > 0; i--) {
                         const j = Math.floor(Math.random() * (i + 1));
                         [types[i], types[j]] = [types[j], types[i]];
                     }
 
-                    // Generate positions preventing overlap
                     for (let i = 0; i < 4; i++) {
                         let x, y, valid = false;
                         while (!valid) {
@@ -1639,7 +1630,6 @@
                     const hole = this.holes[index];
                     hole.revealed = true;
                     
-                    // Reveal all
                     const land = $('#treasure-land');
                     const allEls = land.children;
 
@@ -1661,15 +1651,13 @@
                     const msgEl = $('#treasure-msg');
                     
                     if (hole.type === 'WIN_36') {
-                        // Win x36: Payout = Bet * 36
                         const payout = this.betAmount * 36;
                         app.processGameEnd(payout, this.betAmount, 'Treasure Hunt');
                         
                         msgEl.innerText = "JACKPOT x36!";
                         msgEl.className = "h-8 text-center text-gold font-serif italic text-3xl font-bold drop-shadow-md";
-                        app.triggerWinFx(payout);
+                        app.triggerWinFx(payout - this.betAmount);
                     } else if (hole.type === 'LOSS_50') {
-                        // Loss 50%: User gets back 50% of bet
                         const payout = Math.floor(this.betAmount * 0.5);
                         app.processGameEnd(payout, this.betAmount, 'Treasure Hunt');
                         
@@ -1677,12 +1665,11 @@
                         msgEl.className = "h-8 text-center text-pink-400 font-serif italic text-xl";
                         app.triggerLoseFx(this.betAmount - payout);
                     } else {
-                        // Loss 100%: User gets back 0
                         app.processGameEnd(0, this.betAmount, 'Treasure Hunt');
                         
                         msgEl.innerText = "Busted!";
                         msgEl.className = "h-8 text-center text-red-500 font-serif italic text-xl";
-                        app.audio.playLose();
+                        app.triggerLoseFx(this.betAmount);
                     }
 
                     setTimeout(() => {
@@ -1974,12 +1961,10 @@
                         this.currentPrice = p;
                         this.currentCandle = { o: p, h: p, l: p, c: p, v: 0, t: now };
                         
-                        // Fix for scroll: attach listeners to canvas, not window
                         cvs.addEventListener('mousedown', e => this.startDrag(e));
                         window.addEventListener('mousemove', e => this.drag(e));
                         window.addEventListener('mouseup', () => this.endDrag());
                         
-                        // Fix touch scrolling blocking on mobile
                         cvs.addEventListener('touchstart', e => this.handleTouchStart(e), {passive: false});
                         cvs.addEventListener('touchmove', e => this.handleTouchMove(e), {passive: false});
                         cvs.addEventListener('touchend', e => this.handleTouchEnd(e));
@@ -1997,8 +1982,6 @@
                 
                 drag(e) {
                     if(!this.isDragging) return;
-                    // Do NOT call preventDefault here if attached to window for mousemove
-                    // But for touchmove on canvas, we do.
                     const x = e.touches ? e.touches[0].clientX : e.clientX;
                     const dx = x - this.lastX;
                     this.offsetX += dx;
@@ -2016,9 +1999,6 @@
                 },
                 
                 handleTouchStart(e) {
-                    // preventDefault on canvas ensures scroll doesn't happen when touching chart
-                    // But we want page scroll elsewhere. Since listener is on cvs, this is fine.
-                    // e.preventDefault(); // Optional depending on behavior desired.
                     if (e.touches.length === 2) {
                         this.isDragging = false;
                         const dist = Math.hypot(
@@ -2033,7 +2013,6 @@
                 },
 
                 handleTouchMove(e) {
-                    // Prevent page scroll only when interacting with chart
                     e.preventDefault(); 
                     if (e.touches.length === 2 && this.initialPinchDist) {
                         const dist = Math.hypot(
@@ -2115,7 +2094,7 @@
                     document.getElementById('trade-pnl-live').classList.remove('hidden');
                     
                     app.user.score -= bet;
-                    this.updateStaticBalance();
+                    // Balance deducted but UI static
                 },
                 
                 closeOrder(pnl) {
@@ -2144,6 +2123,7 @@
                         title.className = "text-4xl font-serif italic mb-1 text-green-400";
                         amt.innerText = "+$ " + Math.round(profit).toLocaleString();
                         amt.className = "font-mono text-lg text-green-400 font-bold";
+                        app.triggerWinFx(profit);
                     } else if (profit < 0) {
                         app.audio.playLose();
                         title.innerText = "LOSS";
@@ -2584,7 +2564,6 @@
                 const pnl = payout - bet;
                 this.user.score += payout; 
                 
-                // History logs profit/loss (not total payout)
                 this.user.history.push({ date: Date.now(), amount: pnl, game: game });
                 if(this.user.history.length > 200) this.user.history.shift();
                 this.saveUser();
@@ -2596,8 +2575,6 @@
 
             // Legacy support for non-game transaction (like transfer)
             recordTx(amount, game) {
-                // This method blindly adds amount to score. Used for transfers.
-                // Not used for games anymore to avoid the double-deduction logic confusion.
                 this.user.score += amount;
                 this.user.history.push({ date: Date.now(), amount: amount, game: game });
                 if(this.user.history.length > 200) this.user.history.shift();
