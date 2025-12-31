@@ -1263,7 +1263,7 @@
                         app.processGameEnd(payout, amount, 'Tai Xiu');
                         msgEl.innerText = "CHIẾN THẮNG!";
                         msgEl.className = "font-serif text-3xl italic text-[#e0c080] font-bold drop-shadow-md";
-                        app.triggerWinFx(payout - amount);
+                        app.triggerWinFx(payout);
                     } else {
                         app.processGameEnd(0, amount, 'Tai Xiu');
                         msgEl.innerText = "THẤT BẠI";
@@ -1435,7 +1435,7 @@
                         app.processGameEnd(payout, this.betAmount, 'Blackjack');
                         msgEl.innerText = isBJ ? "BLACKJACK!" : "YOU WIN!";
                         msgEl.className = "font-serif text-3xl italic text-[#e0c080] font-bold drop-shadow-md";
-                        app.triggerWinFx(payout - this.betAmount);
+                        app.triggerWinFx(payout);
                     } else if (res === 'BUST') {
                         app.processGameEnd(0, this.betAmount, 'Blackjack');
                         msgEl.innerText = "BUST!";
@@ -1548,7 +1548,7 @@
                         msgEl.className = "font-serif text-3xl italic text-[#e0c080] font-bold drop-shadow-md";
                         subEl.innerText = `Win $ ${winAmt.toLocaleString()}`;
                         $('.win-line').style.display = 'block';
-                        app.triggerWinFx(winAmt - amount);
+                        app.triggerWinFx(winAmt);
                     } else if (pair) {
                          const profitMultiplier = 1.5;
                          const profit = Math.floor(amount * profitMultiplier);
@@ -1559,7 +1559,7 @@
                          msgEl.innerText = "NICE HIT!";
                          msgEl.className = "font-serif text-3xl italic text-[#e0c080] font-bold";
                          subEl.innerText = `Win $ ${winAmt.toLocaleString()}`;
-                         app.triggerWinFx(winAmt - amount);
+                         app.triggerWinFx(winAmt);
                     } else {
                         app.processGameEnd(0, amount, 'Slots');
                         msgEl.innerText = "Try Again";
@@ -1673,7 +1673,7 @@
                         
                         msgEl.innerText = "JACKPOT x36!";
                         msgEl.className = "h-8 text-center text-gold font-serif italic text-3xl font-bold drop-shadow-md";
-                        app.triggerWinFx(payout - this.betAmount);
+                        app.triggerWinFx(payout);
                     } else if (hole.type === 'LOSS_50') {
                         const payout = Math.floor(this.betAmount * 0.5);
                         app.processGameEnd(payout, this.betAmount, 'Treasure Hunt');
