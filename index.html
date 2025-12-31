@@ -348,6 +348,7 @@
             height: 100dvh !important;
             border-radius: 0;
         }
+        #tradeChart { cursor: crosshair; touch-action: none; }
         @media (min-width: 1024px) {
              #view-trading .flex-col {
                 max-width: 100% !important;
@@ -604,16 +605,11 @@
                     </div>
                 </div>
                 
-                <div class="flex gap-2 mb-2 items-center">
-                    <span class="text-[10px] text-gray-500 uppercase tracking-widest mr-2">Timeframe</span>
-                    <span class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white font-bold">1s</span>
-                </div>
-
                 <!-- Canvas Chart (Flex Grow to fill space) -->
                 <div class="relative w-full flex-1 bg-[#151518] rounded-lg border border-white/5 mb-4 overflow-hidden min-h-[300px]">
                     <canvas id="tradeChart" class="w-full h-full"></canvas>
                     
-                    <div id="trade-timer-overlay" class="absolute top-2 right-2 hidden z-10 bg-black/50 px-2 py-1 rounded backdrop-blur-sm border border-white/10">
+                    <div id="trade-timer-overlay" class="absolute top-2 right-14 hidden z-10 bg-black/50 px-2 py-1 rounded backdrop-blur-sm border border-white/10">
                         <span class="text-[9px] text-gray-400 uppercase mr-2">Closing in:</span>
                         <span id="trade-countdown" class="font-mono text-gold font-bold">00:00</span>
                     </div>
@@ -1279,15 +1275,17 @@
                 leverage: 10,
                 activeOrder: null, 
                 interval: null,
-                candleResolution: 1, 
                 
-                // Advanced Algorithm Params
+                // Algo & Interactions
                 volatility: 0.8,
                 momentum: 0,
-                targetPrice: 54000,
-                noise: 0,
-                indicators: { sma: [] },
-
+                jumpProb: 0.02,
+                
+                scaleX: 1.0,
+                offsetX: 0,
+                isDragging: false,
+                lastX: 0,
+                
                 init() {
                     const cvs = document.getElementById('tradeChart');
                     if (cvs) {
@@ -1298,38 +1296,63 @@
                         this.chartCtx = cvs.getContext('2d');
                         this.chartCtx.scale(dpr, dpr);
                         
-                        // Seed history smoothly
+                        // Seed History (Richer Volume & Price)
                         this.candles = [];
-                        this.indicators.sma = [];
                         let p = 54000;
                         const now = Math.floor(Date.now() / 1000);
                         
-                        // Generate enough history for SMA
-                        for(let i=0; i<60; i++) {
-                            // Geometric Brownian Motion step
-                            const drift = 0;
-                            const shock = (Math.random() - 0.5) * 15; // Initial seed volatility
-                            p = p + drift + shock;
-                            
+                        // Create 100 candles for full history
+                        for(let i=0; i<100; i++) {
+                            // Initial random walk
+                            p += (Math.random() - 0.5) * 10;
                             const o = p;
-                            const c = p + (Math.random() - 0.5) * 5;
-                            const h = Math.max(o, c) + Math.random() * 2;
-                            const l = Math.min(o, c) - Math.random() * 2;
-                            this.candles.push({ o, h, l, c, t: now - (60-i)*this.candleResolution });
-                            
-                            // Calc SMA
-                            const slice = this.candles.slice(Math.max(0, this.candles.length - 20));
-                            const avg = slice.reduce((sum, c) => sum + c.c, 0) / slice.length;
-                            this.indicators.sma.push(avg);
-                            
+                            const c = p + (Math.random() - 0.5) * 8;
+                            const h = Math.max(o, c) + Math.random() * 3;
+                            const l = Math.min(o, c) - Math.random() * 3;
+                            const v = Math.random() * 100 + 50; // Volume
+                            this.candles.push({ o, h, l, c, v, t: now - (100-i) });
                             p = c;
                         }
                         this.currentPrice = p;
-                        this.currentCandle = { o: p, h: p, l: p, c: p, t: now };
-                        this.targetPrice = p; // Reset target
+                        this.currentCandle = { o: p, h: p, l: p, c: p, v: 0, t: now };
                         
+                        // Event Listeners for Interaction
+                        cvs.addEventListener('mousedown', e => this.startDrag(e));
+                        window.addEventListener('mousemove', e => this.drag(e));
+                        window.addEventListener('mouseup', () => this.endDrag());
+                        
+                        cvs.addEventListener('touchstart', e => this.startDrag(e), {passive: false});
+                        window.addEventListener('touchmove', e => this.drag(e), {passive: false});
+                        window.addEventListener('touchend', () => this.endDrag());
+                        
+                        cvs.addEventListener('wheel', e => this.zoom(e), {passive: false});
+
                         this.startLoop();
                     }
+                },
+                
+                startDrag(e) {
+                    this.isDragging = true;
+                    this.lastX = e.touches ? e.touches[0].clientX : e.clientX;
+                },
+                
+                drag(e) {
+                    if(!this.isDragging) return;
+                    e.preventDefault(); 
+                    const x = e.touches ? e.touches[0].clientX : e.clientX;
+                    const dx = x - this.lastX;
+                    this.offsetX += dx;
+                    this.lastX = x;
+                },
+                
+                endDrag() {
+                    this.isDragging = false;
+                },
+                
+                zoom(e) {
+                    e.preventDefault();
+                    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                    this.scaleX = Math.max(0.5, Math.min(this.scaleX * delta, 5.0));
                 },
                 
                 setTime(t) {
@@ -1381,6 +1404,8 @@
                     document.getElementById('trade-pnl-live').classList.remove('hidden');
                     
                     app.user.score -= bet;
+                    // Note: We DO NOT animate balance here anymore, kept static until close
+                    this.updateStaticBalance();
                 },
                 
                 closeOrder(pnl) {
@@ -1435,8 +1460,12 @@
                         document.getElementById('trade-pnl-live').classList.add('hidden');
                         
                         this.activeOrder = null;
-                        app.animateBalance(app.user.score);
+                        this.updateStaticBalance(); // Update Balance only now
                     }, 2500);
+                },
+                
+                updateStaticBalance() {
+                    $$('.user-balance-display').forEach(el => el.textContent = '$ ' + app.user.score.toLocaleString());
                 },
                 
                 startLoop() {
@@ -1450,44 +1479,41 @@
                 },
                 
                 updatePrice() {
-                    // --- Advanced Volatility Algorithm ---
-                    // Simulate market microstructure noise + trend
+                    // --- Complex Jump Diffusion Algorithm ---
+                    // 1. Stochastic Volatility
+                    if(Math.random() < 0.03) this.volatility = 0.5 + Math.random() * 4.0; // Volatility spikes
                     
-                    // 1. Change volatility randomly
-                    if(Math.random() < 0.05) this.volatility = 0.5 + Math.random() * 2.5; 
+                    // 2. Mean Reversion Momentum
+                    this.momentum = this.momentum * 0.9 + (Math.random() - 0.5) * 0.5;
                     
-                    // 2. Momentum (Trend following)
-                    // If moving up, higher chance to keep moving up, but with mean reversion
-                    this.momentum *= 0.95; // decay
-                    if(Math.random() < 0.1) this.momentum += (Math.random() - 0.5) * 2;
+                    // 3. Jump Process (Sudden large moves)
+                    let jump = 0;
+                    if(Math.random() < this.jumpProb) {
+                        jump = (Math.random() - 0.5) * 30 * this.volatility;
+                    }
                     
-                    // 3. Calculate step
-                    const noise = (Math.random() - 0.5) * this.volatility * (this.isTrading ? 1.5 : 1);
-                    const step = this.momentum + noise;
+                    // 4. Normal Noise
+                    const noise = (Math.random() - 0.5) * this.volatility * (this.isTrading ? 1.2 : 1);
                     
+                    const step = this.momentum + noise + jump;
                     this.currentPrice += step;
                     
-                    // Update Current Candle
+                    // Update Candle
                     this.currentCandle.c = this.currentPrice;
                     this.currentCandle.h = Math.max(this.currentCandle.h, this.currentPrice);
                     this.currentCandle.l = Math.min(this.currentCandle.l, this.currentPrice);
+                    this.currentCandle.v += Math.abs(step) * 10; // Volume accumulates with volatility
                     
                     const now = Math.floor(Date.now() / 1000);
-                    if (now >= this.currentCandle.t + this.candleResolution) {
+                    // 1s candles always for high update rate feel
+                    if (now > this.currentCandle.t) {
                          this.candles.push({ ...this.currentCandle });
-                         
-                         // Update Indicator (SMA)
-                         const slice = this.candles.slice(Math.max(0, this.candles.length - 20));
-                         const avg = slice.reduce((sum, c) => sum + c.c, 0) / slice.length;
-                         this.indicators.sma.push(avg);
-                         
-                         this.currentCandle = { o: this.currentPrice, h: this.currentPrice, l: this.currentPrice, c: this.currentPrice, t: now };
-                         if(this.candles.length > 60) {
-                             this.candles.shift();
-                             this.indicators.sma.shift();
-                         }
+                         this.currentCandle = { o: this.currentPrice, h: this.currentPrice, l: this.currentPrice, c: this.currentPrice, v: 0, t: now };
+                         // Keep buffer reasonably sized, but allow history to grow for scrolling
+                         if(this.candles.length > 500) this.candles.shift();
                     }
                     
+                    // DOM Updates
                     const elPrice = document.getElementById('trade-price');
                     const elChange = document.getElementById('trade-change');
                     if(elPrice) {
@@ -1500,6 +1526,7 @@
                         elPrice.className = `font-mono text-xl font-bold ${diff >= 0 ? 'text-green-400' : 'text-red-400'}`;
                     }
                     
+                    // Trade Management
                     if(this.isTrading && this.activeOrder) {
                         const nowMs = Date.now();
                         const timeLeft = Math.max(0, this.activeOrder.endTime - nowMs);
@@ -1511,9 +1538,7 @@
                         let pnlPercent = (priceDiff / this.activeOrder.entry) * this.activeOrder.lev * directionMult;
                         let currentPnL = this.activeOrder.bet * pnlPercent;
                         
-                        const floatBalance = app.user.score + (this.activeOrder.bet + currentPnL);
-                        $$('.user-balance-display').forEach(el => el.textContent = '$ ' + Math.max(0, Math.floor(floatBalance)).toLocaleString());
-
+                        // Live PnL Badge (Balance is NOT updated here)
                         const pnlEl = document.getElementById('pnl-live-val');
                         pnlEl.innerText = (currentPnL>=0?'+':'') + '$ ' + Math.round(currentPnL).toLocaleString();
                         pnlEl.className = `font-mono text-xl font-bold ${currentPnL >= 0 ? 'text-green-400' : 'text-red-500'}`;
@@ -1537,48 +1562,94 @@
                     
                     const w = parent.clientWidth;
                     const h = parent.clientHeight;
+                    const rightMargin = 60; // Space for Price Axis
+                    const chartW = w - rightMargin;
                     
                     ctx.clearRect(0, 0, w, h);
                     
-                    // Grid
-                    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
-                    ctx.lineWidth = 1;
-                    ctx.beginPath();
-                    for(let i=0; i<w; i+=50) { ctx.moveTo(i,0); ctx.lineTo(i,h); }
-                    for(let i=0; i<h; i+=50) { ctx.moveTo(0,i); ctx.lineTo(w,i); }
-                    ctx.stroke();
+                    // Grid & Background
+                    ctx.fillStyle = '#151518';
+                    ctx.fillRect(0, 0, w, h);
                     
-                    // Price Scaling
+                    // Calculate View
+                    const candleBaseWidth = 10;
+                    const candleWidth = candleBaseWidth * this.scaleX;
+                    const spacing = 2 * this.scaleX;
+                    const totalUnit = candleWidth + spacing;
+                    
+                    const maxVisible = Math.ceil(chartW / totalUnit);
                     const allCandles = [...this.candles, this.currentCandle];
-                    let minP = Infinity, maxP = -Infinity;
-                    allCandles.forEach(c => { minP = Math.min(minP, c.l); maxP = Math.max(maxP, c.h); });
-                    const padding = (maxP - minP) * 0.15;
-                    const range = (maxP - minP) + (padding*2) || 1;
+                    const totalCandles = allCandles.length;
                     
+                    // Right padding: Ensure current candle is offset from the right axis
+                    const rightPaddingUnits = 5; 
+                    
+                    // Calculate start index based on offset
+                    // Offset 0 = View end at latest candle
+                    let viewEndIndex = totalCandles + rightPaddingUnits + (this.offsetX / totalUnit);
+                    let viewStartIndex = viewEndIndex - maxVisible;
+                    
+                    // Clamping
+                    if(viewEndIndex > totalCandles + 20) { 
+                        this.offsetX = (totalCandles + 20 - rightPaddingUnits - totalCandles) * totalUnit; 
+                        viewEndIndex = totalCandles + 20; 
+                    }
+                    
+                    // Identify visible candles for scaling
+                    let minP = Infinity, maxP = -Infinity;
+                    let maxV = 0;
+                    
+                    const visibleCandles = [];
+                    for(let i = Math.floor(viewStartIndex); i <= Math.ceil(viewEndIndex); i++) {
+                        if(i >= 0 && i < totalCandles) {
+                            const c = allCandles[i];
+                            visibleCandles.push({ ...c, i }); // store original index
+                            minP = Math.min(minP, c.l);
+                            maxP = Math.max(maxP, c.h);
+                            maxV = Math.max(maxV, c.v);
+                        }
+                    }
+                    
+                    // Default range if no candles visible
+                    if(minP === Infinity) { minP = this.currentPrice - 10; maxP = this.currentPrice + 10; }
+                    
+                    const padding = (maxP - minP) * 0.1;
+                    const range = (maxP - minP) + (padding*2) || 1;
                     const getY = (price) => h - ((price - (minP - padding)) / range) * h;
                     
-                    const count = 60; // Fixed view window
-                    const candleWidth = (w / count) * 0.7;
-                    const spacing = (w / count) * 0.3;
-                    
-                    // Draw SMA Indicator
+                    // Draw Grid
+                    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+                    ctx.lineWidth = 1;
                     ctx.beginPath();
-                    this.indicators.sma.forEach((val, i) => {
-                        // Align SMA with candles based on index. SMA array might be shorter initially.
-                        // SMA[0] corresponds to candle[0].
-                        if(i < this.candles.length) {
-                            const x = i * (candleWidth + spacing) + spacing/2 + candleWidth/2;
-                            const y = getY(val);
-                            if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-                        }
-                    });
-                    ctx.strokeStyle = '#facc15'; // Yellow
-                    ctx.lineWidth = 1.5;
+                    // Horizontal Grid
+                    const gridSteps = 5;
+                    for(let i=0; i<=gridSteps; i++) {
+                        const y = h * (i/gridSteps);
+                        ctx.moveTo(0, y); ctx.lineTo(chartW, y);
+                    }
+                    // Vertical Grid
+                    for(let i=0; i<chartW; i+=100) {
+                        ctx.moveTo(i,0); ctx.lineTo(i,h);
+                    }
                     ctx.stroke();
+                    
+                    // Draw Volume (Bottom)
+                    const volHeight = h * 0.2;
+                    visibleCandles.forEach(c => {
+                        const x = (c.i - viewStartIndex) * totalUnit;
+                        if(x + candleWidth < 0 || x > chartW) return;
+                        
+                        const vH = (c.v / maxV) * volHeight;
+                        const isGreen = c.c >= c.o;
+                        ctx.fillStyle = isGreen ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)';
+                        ctx.fillRect(x, h - vH, candleWidth, vH);
+                    });
 
                     // Draw Candles
-                    allCandles.forEach((c, i) => {
-                        const x = i * (candleWidth + spacing) + spacing/2;
+                    visibleCandles.forEach(c => {
+                        const x = (c.i - viewStartIndex) * totalUnit;
+                        if(x + candleWidth < 0 || x > chartW) return;
+                        
                         const yO = getY(c.o);
                         const yC = getY(c.c);
                         const yH = getY(c.h);
@@ -1587,6 +1658,7 @@
                         const isGreen = c.c >= c.o;
                         ctx.fillStyle = isGreen ? '#22c55e' : '#ef4444';
                         ctx.strokeStyle = isGreen ? '#22c55e' : '#ef4444';
+                        ctx.lineWidth = 1;
                         
                         // Wick
                         ctx.beginPath();
@@ -1600,19 +1672,17 @@
                         ctx.fillRect(x, Math.min(yO, yC), candleWidth, bodyH);
                     });
                     
-                    // Entry Line
+                    // Trade Entry Line
                     if(this.isTrading && this.activeOrder) {
                         const yEntry = getY(this.activeOrder.entry);
                         ctx.beginPath();
                         ctx.moveTo(0, yEntry);
-                        ctx.lineTo(w, yEntry);
+                        ctx.lineTo(chartW, yEntry);
                         ctx.strokeStyle = '#ffffff';
                         ctx.setLineDash([5, 5]);
                         ctx.stroke();
                         ctx.setLineDash([]);
-                        
                         ctx.fillStyle = '#fff';
-                        ctx.font = '10px monospace';
                         ctx.fillText('ENTRY', 5, yEntry - 5);
                     }
                     
@@ -1620,18 +1690,32 @@
                     const yCurr = getY(this.currentPrice);
                     ctx.beginPath();
                     ctx.moveTo(0, yCurr);
-                    ctx.lineTo(w, yCurr);
-                    ctx.strokeStyle = 'rgba(209, 178, 124, 0.5)';
+                    ctx.lineTo(chartW, yCurr);
+                    ctx.strokeStyle = 'rgba(209, 178, 124, 0.8)';
                     ctx.setLineDash([2, 2]);
                     ctx.stroke();
                     ctx.setLineDash([]);
                     
-                    // Current Price Badge
+                    // Draw Right Axis (Price Labels)
+                    ctx.fillStyle = '#0f0f11';
+                    ctx.fillRect(chartW, 0, rightMargin, h); // Clear Axis Area
+                    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                    ctx.font = '10px monospace';
+                    ctx.textAlign = 'left';
+                    
+                    const priceStep = range / gridSteps;
+                    for(let i=0; i<=gridSteps; i++) {
+                        const price = (minP - padding) + (range * (1 - i/gridSteps));
+                        const y = h * (i/gridSteps);
+                        ctx.fillText(price.toFixed(2), chartW + 5, y + 3);
+                    }
+                    
+                    // Current Price Label on Axis
                     ctx.fillStyle = '#D1B27C';
-                    ctx.fillRect(w - 60, yCurr - 10, 60, 20);
+                    ctx.fillRect(chartW, yCurr - 10, rightMargin, 20);
                     ctx.fillStyle = '#000';
                     ctx.font = 'bold 10px monospace';
-                    ctx.fillText(this.currentPrice.toFixed(2), w - 55, yCurr + 3);
+                    ctx.fillText(this.currentPrice.toFixed(2), chartW + 5, yCurr + 3);
                 }
             },
 
@@ -1646,9 +1730,7 @@
                     this.switchView('view-hall');
                     this.updateDash();
                 }
-                // Removed Online Init
                 
-                // Init Trading immediately to prevent jump
                 this.trading.init();
                 
                 this.animLoop();
@@ -1704,9 +1786,8 @@
                 
                 const mainApp = document.getElementById('app');
                 if(id === 'view-trading') {
-                     // Full screen Desktop
                      mainApp.classList.remove('max-w-md');
-                     mainApp.classList.add('full-screen-mode'); // New class for full control
+                     mainApp.classList.add('full-screen-mode'); 
                 } else {
                      mainApp.classList.add('max-w-md');
                      mainApp.classList.remove('full-screen-mode');
