@@ -332,16 +332,23 @@
             font-size: 1.6rem; letter-spacing: 2px; text-transform: uppercase;
         }
         
-        /* New Trading Styles */
-        .trade-slider { -webkit-appearance: none; width: 100%; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.1); outline: none; }
-        .trade-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--color-gold); cursor: pointer; transition: .2s; }
-        .trade-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+        .trade-btn-sm {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 4px;
+            color: #888;
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            transition: 0.2s;
+        }
+        .trade-btn-sm:hover { border-color: var(--color-gold); color: var(--color-gold); }
+        .trade-btn-sm:active { transform: scale(0.95); }
+        
         .btn-leverage.active { border-color: var(--color-gold); color: var(--color-gold); background: rgba(209,178,124,0.1); }
         .btn-time.active { background: rgba(255,255,255,0.1); border-color: white; color: white; }
         .candle-green { background: #22c55e; }
         .candle-red { background: #ef4444; }
         
-        /* Desktop override for full screen trading */
         #app.full-screen-mode {
             max-width: 100% !important;
             width: 100% !important;
@@ -636,10 +643,16 @@
                         </div>
                          <!-- Leverage -->
                         <div>
-                            <div class="flex justify-between mb-1">
-                                <p class="text-[10px] text-gray-500 uppercase tracking-widest">Lev <span id="leverage-val" class="text-gold font-bold ml-1">x10</span></p>
+                            <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Leverage</p>
+                            <div class="flex gap-1">
+                                <input type="number" id="leverage-input" class="w-12 bg-white/5 border border-white/10 rounded text-center text-gold font-bold text-xs" value="10" onchange="app.trading.setLeverage(this.value)">
+                                <div class="flex-1 flex gap-1">
+                                    <button onclick="app.trading.setLeverage(5)" class="flex-1 trade-btn-sm">x5</button>
+                                    <button onclick="app.trading.setLeverage(20)" class="flex-1 trade-btn-sm">x20</button>
+                                    <button onclick="app.trading.setLeverage(50)" class="flex-1 trade-btn-sm">x50</button>
+                                    <button onclick="app.trading.setLeverage(100)" class="flex-1 trade-btn-sm">x100</button>
+                                </div>
                             </div>
-                             <input type="range" min="1" max="100" value="10" class="trade-slider mb-2" oninput="app.trading.setLeverage(this.value)">
                         </div>
                     </div>
 
@@ -1276,7 +1289,6 @@
                 activeOrder: null, 
                 interval: null,
                 
-                // Algo & Interactions
                 volatility: 0.8,
                 momentum: 0,
                 jumpProb: 0.02,
@@ -1285,6 +1297,10 @@
                 offsetX: 0,
                 isDragging: false,
                 lastX: 0,
+                
+                // Pinch to Zoom
+                initialPinchDist: null,
+                initialScaleX: null,
                 
                 init() {
                     const cvs = document.getElementById('tradeChart');
@@ -1296,34 +1312,30 @@
                         this.chartCtx = cvs.getContext('2d');
                         this.chartCtx.scale(dpr, dpr);
                         
-                        // Seed History (Richer Volume & Price)
                         this.candles = [];
                         let p = 54000;
                         const now = Math.floor(Date.now() / 1000);
                         
-                        // Create 100 candles for full history
                         for(let i=0; i<100; i++) {
-                            // Initial random walk
                             p += (Math.random() - 0.5) * 10;
                             const o = p;
                             const c = p + (Math.random() - 0.5) * 8;
                             const h = Math.max(o, c) + Math.random() * 3;
                             const l = Math.min(o, c) - Math.random() * 3;
-                            const v = Math.random() * 100 + 50; // Volume
+                            const v = Math.random() * 100 + 50; 
                             this.candles.push({ o, h, l, c, v, t: now - (100-i) });
                             p = c;
                         }
                         this.currentPrice = p;
                         this.currentCandle = { o: p, h: p, l: p, c: p, v: 0, t: now };
                         
-                        // Event Listeners for Interaction
                         cvs.addEventListener('mousedown', e => this.startDrag(e));
                         window.addEventListener('mousemove', e => this.drag(e));
                         window.addEventListener('mouseup', () => this.endDrag());
                         
-                        cvs.addEventListener('touchstart', e => this.startDrag(e), {passive: false});
-                        window.addEventListener('touchmove', e => this.drag(e), {passive: false});
-                        window.addEventListener('touchend', () => this.endDrag());
+                        cvs.addEventListener('touchstart', e => this.handleTouchStart(e), {passive: false});
+                        window.addEventListener('touchmove', e => this.handleTouchMove(e), {passive: false});
+                        window.addEventListener('touchend', e => this.handleTouchEnd(e));
                         
                         cvs.addEventListener('wheel', e => this.zoom(e), {passive: false});
 
@@ -1355,6 +1367,43 @@
                     this.scaleX = Math.max(0.5, Math.min(this.scaleX * delta, 5.0));
                 },
                 
+                handleTouchStart(e) {
+                    if (e.touches.length === 2) {
+                        this.isDragging = false;
+                        const dist = Math.hypot(
+                            e.touches[0].clientX - e.touches[1].clientX,
+                            e.touches[0].clientY - e.touches[1].clientY
+                        );
+                        this.initialPinchDist = dist;
+                        this.initialScaleX = this.scaleX;
+                    } else if (e.touches.length === 1) {
+                        this.startDrag(e);
+                    }
+                },
+
+                handleTouchMove(e) {
+                    e.preventDefault();
+                    if (e.touches.length === 2 && this.initialPinchDist) {
+                        const dist = Math.hypot(
+                            e.touches[0].clientX - e.touches[1].clientX,
+                            e.touches[0].clientY - e.touches[1].clientY
+                        );
+                        const scale = dist / this.initialPinchDist;
+                        this.scaleX = Math.max(0.5, Math.min(this.initialScaleX * scale, 5.0));
+                    } else if (e.touches.length === 1) {
+                        this.drag(e);
+                    }
+                },
+
+                handleTouchEnd(e) {
+                    if (e.touches.length < 2) {
+                        this.initialPinchDist = null;
+                    }
+                    if (e.touches.length === 0) {
+                        this.endDrag();
+                    }
+                },
+                
                 setTime(t) {
                     app.audio.playClick();
                     if(this.isTrading) return;
@@ -1373,9 +1422,12 @@
                 setLeverage(l) {
                     app.audio.playClick();
                     if(this.isTrading) return;
-                    this.leverage = parseInt(l);
-                    document.getElementById('leverage-val').innerText = 'x' + this.leverage;
-                    document.querySelector('.trade-slider').value = this.leverage;
+                    let val = parseInt(l);
+                    if (isNaN(val) || val < 1) val = 1;
+                    if (val > 100) val = 100;
+                    this.leverage = val;
+                    const el = document.getElementById('leverage-input');
+                    if(el) el.value = val;
                 },
                 
                 placeOrder(dir) {
@@ -1396,7 +1448,8 @@
                     };
                     
                     document.getElementById('trade-amount').disabled = true;
-                    document.querySelector('.trade-slider').disabled = true;
+                    document.getElementById('leverage-input').disabled = true;
+                    $$('.trade-btn-sm').forEach(b => b.disabled = true);
                     $$('.btn-time, #btn-long, #btn-short').forEach(b => b.disabled = true);
                     $$('#btn-long, #btn-short').forEach(b => b.classList.add('opacity-50'));
                     
@@ -1404,7 +1457,6 @@
                     document.getElementById('trade-pnl-live').classList.remove('hidden');
                     
                     app.user.score -= bet;
-                    // Note: We DO NOT animate balance here anymore, kept static until close
                     this.updateStaticBalance();
                 },
                 
@@ -1453,14 +1505,15 @@
                          document.getElementById('trade-result-box').classList.remove('scale-100');
                          
                         document.getElementById('trade-amount').disabled = false;
-                        document.querySelector('.trade-slider').disabled = false;
+                        document.getElementById('leverage-input').disabled = false;
+                        $$('.trade-btn-sm').forEach(b => b.disabled = false);
                         $$('.btn-time, #btn-long, #btn-short').forEach(b => b.disabled = false);
                         $$('#btn-long, #btn-short').forEach(b => b.classList.remove('opacity-50'));
                         document.getElementById('trade-timer-overlay').classList.add('hidden');
                         document.getElementById('trade-pnl-live').classList.add('hidden');
                         
                         this.activeOrder = null;
-                        this.updateStaticBalance(); // Update Balance only now
+                        this.updateStaticBalance(); 
                     }, 2500);
                 },
                 
@@ -1479,41 +1532,32 @@
                 },
                 
                 updatePrice() {
-                    // --- Complex Jump Diffusion Algorithm ---
-                    // 1. Stochastic Volatility
-                    if(Math.random() < 0.03) this.volatility = 0.5 + Math.random() * 4.0; // Volatility spikes
+                    if(Math.random() < 0.03) this.volatility = 0.5 + Math.random() * 4.0; 
                     
-                    // 2. Mean Reversion Momentum
                     this.momentum = this.momentum * 0.9 + (Math.random() - 0.5) * 0.5;
                     
-                    // 3. Jump Process (Sudden large moves)
                     let jump = 0;
                     if(Math.random() < this.jumpProb) {
                         jump = (Math.random() - 0.5) * 30 * this.volatility;
                     }
                     
-                    // 4. Normal Noise
                     const noise = (Math.random() - 0.5) * this.volatility * (this.isTrading ? 1.2 : 1);
                     
                     const step = this.momentum + noise + jump;
                     this.currentPrice += step;
                     
-                    // Update Candle
                     this.currentCandle.c = this.currentPrice;
                     this.currentCandle.h = Math.max(this.currentCandle.h, this.currentPrice);
                     this.currentCandle.l = Math.min(this.currentCandle.l, this.currentPrice);
-                    this.currentCandle.v += Math.abs(step) * 10; // Volume accumulates with volatility
+                    this.currentCandle.v += Math.abs(step) * 10; 
                     
                     const now = Math.floor(Date.now() / 1000);
-                    // 1s candles always for high update rate feel
                     if (now > this.currentCandle.t) {
                          this.candles.push({ ...this.currentCandle });
                          this.currentCandle = { o: this.currentPrice, h: this.currentPrice, l: this.currentPrice, c: this.currentPrice, v: 0, t: now };
-                         // Keep buffer reasonably sized, but allow history to grow for scrolling
                          if(this.candles.length > 500) this.candles.shift();
                     }
                     
-                    // DOM Updates
                     const elPrice = document.getElementById('trade-price');
                     const elChange = document.getElementById('trade-change');
                     if(elPrice) {
@@ -1526,7 +1570,6 @@
                         elPrice.className = `font-mono text-xl font-bold ${diff >= 0 ? 'text-green-400' : 'text-red-400'}`;
                     }
                     
-                    // Trade Management
                     if(this.isTrading && this.activeOrder) {
                         const nowMs = Date.now();
                         const timeLeft = Math.max(0, this.activeOrder.endTime - nowMs);
@@ -1538,7 +1581,6 @@
                         let pnlPercent = (priceDiff / this.activeOrder.entry) * this.activeOrder.lev * directionMult;
                         let currentPnL = this.activeOrder.bet * pnlPercent;
                         
-                        // Live PnL Badge (Balance is NOT updated here)
                         const pnlEl = document.getElementById('pnl-live-val');
                         pnlEl.innerText = (currentPnL>=0?'+':'') + '$ ' + Math.round(currentPnL).toLocaleString();
                         pnlEl.className = `font-mono text-xl font-bold ${currentPnL >= 0 ? 'text-green-400' : 'text-red-500'}`;
@@ -1562,16 +1604,14 @@
                     
                     const w = parent.clientWidth;
                     const h = parent.clientHeight;
-                    const rightMargin = 60; // Space for Price Axis
-                    const chartW = w - rightMargin;
+                    const rightMargin = 60; 
+                    const chartW = w; 
                     
                     ctx.clearRect(0, 0, w, h);
                     
-                    // Grid & Background
                     ctx.fillStyle = '#151518';
                     ctx.fillRect(0, 0, w, h);
                     
-                    // Calculate View
                     const candleBaseWidth = 10;
                     const candleWidth = candleBaseWidth * this.scaleX;
                     const spacing = 2 * this.scaleX;
@@ -1581,21 +1621,16 @@
                     const allCandles = [...this.candles, this.currentCandle];
                     const totalCandles = allCandles.length;
                     
-                    // Right padding: Ensure current candle is offset from the right axis
-                    const rightPaddingUnits = 5; 
+                    const rightPaddingUnits = 8; 
                     
-                    // Calculate start index based on offset
-                    // Offset 0 = View end at latest candle
                     let viewEndIndex = totalCandles + rightPaddingUnits + (this.offsetX / totalUnit);
                     let viewStartIndex = viewEndIndex - maxVisible;
                     
-                    // Clamping
                     if(viewEndIndex > totalCandles + 20) { 
                         this.offsetX = (totalCandles + 20 - rightPaddingUnits - totalCandles) * totalUnit; 
                         viewEndIndex = totalCandles + 20; 
                     }
                     
-                    // Identify visible candles for scaling
                     let minP = Infinity, maxP = -Infinity;
                     let maxV = 0;
                     
@@ -1603,49 +1638,44 @@
                     for(let i = Math.floor(viewStartIndex); i <= Math.ceil(viewEndIndex); i++) {
                         if(i >= 0 && i < totalCandles) {
                             const c = allCandles[i];
-                            visibleCandles.push({ ...c, i }); // store original index
+                            visibleCandles.push({ ...c, i }); 
                             minP = Math.min(minP, c.l);
                             maxP = Math.max(maxP, c.h);
                             maxV = Math.max(maxV, c.v);
                         }
                     }
                     
-                    // Default range if no candles visible
                     if(minP === Infinity) { minP = this.currentPrice - 10; maxP = this.currentPrice + 10; }
                     
-                    const padding = (maxP - minP) * 0.1;
+                    const padding = (maxP - minP) * 0.15;
                     const range = (maxP - minP) + (padding*2) || 1;
                     const getY = (price) => h - ((price - (minP - padding)) / range) * h;
                     
-                    // Draw Grid
                     ctx.strokeStyle = 'rgba(255,255,255,0.05)';
                     ctx.lineWidth = 1;
                     ctx.beginPath();
-                    // Horizontal Grid
-                    const gridSteps = 5;
+                    
+                    const gridSteps = 6;
                     for(let i=0; i<=gridSteps; i++) {
                         const y = h * (i/gridSteps);
-                        ctx.moveTo(0, y); ctx.lineTo(chartW, y);
+                        ctx.moveTo(0, y); ctx.lineTo(chartW - rightMargin, y);
                     }
-                    // Vertical Grid
                     for(let i=0; i<chartW; i+=100) {
                         ctx.moveTo(i,0); ctx.lineTo(i,h);
                     }
                     ctx.stroke();
                     
-                    // Draw Volume (Bottom)
-                    const volHeight = h * 0.2;
+                    const volHeight = h * 0.15;
                     visibleCandles.forEach(c => {
                         const x = (c.i - viewStartIndex) * totalUnit;
                         if(x + candleWidth < 0 || x > chartW) return;
                         
                         const vH = (c.v / maxV) * volHeight;
                         const isGreen = c.c >= c.o;
-                        ctx.fillStyle = isGreen ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)';
+                        ctx.fillStyle = isGreen ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)';
                         ctx.fillRect(x, h - vH, candleWidth, vH);
                     });
 
-                    // Draw Candles
                     visibleCandles.forEach(c => {
                         const x = (c.i - viewStartIndex) * totalUnit;
                         if(x + candleWidth < 0 || x > chartW) return;
@@ -1660,19 +1690,16 @@
                         ctx.strokeStyle = isGreen ? '#22c55e' : '#ef4444';
                         ctx.lineWidth = 1;
                         
-                        // Wick
                         ctx.beginPath();
                         ctx.moveTo(x + candleWidth/2, yH);
                         ctx.lineTo(x + candleWidth/2, yL);
                         ctx.stroke();
                         
-                        // Body
                         let bodyH = Math.abs(yC - yO);
                         if(bodyH < 1) bodyH = 1;
                         ctx.fillRect(x, Math.min(yO, yC), candleWidth, bodyH);
                     });
                     
-                    // Trade Entry Line
                     if(this.isTrading && this.activeOrder) {
                         const yEntry = getY(this.activeOrder.entry);
                         ctx.beginPath();
@@ -1686,36 +1713,36 @@
                         ctx.fillText('ENTRY', 5, yEntry - 5);
                     }
                     
-                    // Current Price Line
                     const yCurr = getY(this.currentPrice);
                     ctx.beginPath();
                     ctx.moveTo(0, yCurr);
                     ctx.lineTo(chartW, yCurr);
-                    ctx.strokeStyle = 'rgba(209, 178, 124, 0.8)';
+                    ctx.strokeStyle = 'rgba(209, 178, 124, 0.4)';
                     ctx.setLineDash([2, 2]);
                     ctx.stroke();
                     ctx.setLineDash([]);
                     
-                    // Draw Right Axis (Price Labels)
-                    ctx.fillStyle = '#0f0f11';
-                    ctx.fillRect(chartW, 0, rightMargin, h); // Clear Axis Area
-                    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                    ctx.fillStyle = 'rgba(15, 15, 17, 0.8)'; 
+                    ctx.fillRect(w - rightMargin, 0, rightMargin, h);
+                    
+                    ctx.fillStyle = 'rgba(255,255,255,0.3)';
                     ctx.font = '10px monospace';
                     ctx.textAlign = 'left';
                     
-                    const priceStep = range / gridSteps;
                     for(let i=0; i<=gridSteps; i++) {
                         const price = (minP - padding) + (range * (1 - i/gridSteps));
                         const y = h * (i/gridSteps);
-                        ctx.fillText(price.toFixed(2), chartW + 5, y + 3);
+                        if (Math.abs(y - yCurr) > 15) { 
+                            ctx.fillText(price.toFixed(2), w - rightMargin + 5, y + 3);
+                        }
                     }
                     
-                    // Current Price Label on Axis
-                    ctx.fillStyle = '#D1B27C';
-                    ctx.fillRect(chartW, yCurr - 10, rightMargin, 20);
-                    ctx.fillStyle = '#000';
+                    const isUp = this.currentPrice >= (this.candles[0]?.o || 0);
+                    ctx.fillStyle = isUp ? '#22c55e' : '#ef4444';
+                    ctx.fillRect(w - rightMargin, yCurr - 10, rightMargin, 20);
+                    ctx.fillStyle = '#fff';
                     ctx.font = 'bold 10px monospace';
-                    ctx.fillText(this.currentPrice.toFixed(2), chartW + 5, yCurr + 3);
+                    ctx.fillText(this.currentPrice.toFixed(2), w - rightMargin + 5, yCurr + 3);
                 }
             },
 
@@ -1992,267 +2019,6 @@
                     const wins = (typeof app.user.totalWins === 'number') ? app.user.totalWins : app.user.history.filter(t => t.amount > 0).length;
                     const max = (typeof app.user.bestWin === 'number') ? app.user.bestWin : app.user.history.reduce((m,t) => Math.max(m, t.amount), 0);
                     $('#stat-wins').innerText = wins; $('#stat-max').innerText = '$ ' + max.toLocaleString();
-                }
-            },
-
-            setBet(game, val) {
-                app.audio.playClick();
-                const el = $(`#${game}-bet-input`);
-                if(val === 'ALL') el.value = app.user.score; else el.value = val;
-            },
-
-            showLeaderboard() {
-                app.audio.playClick();
-                this.leaderboard.render('global');
-                this.switchView('view-leaderboard');
-            },
-
-            checkBalance(bet) {
-                if(isNaN(bet) || bet <= 0) { alert("Cược không hợp lệ!"); return false; }
-                if(bet > this.user.score) { alert("Không đủ điểm!"); return false; }
-                return true;
-            },
-
-            taixiu: {
-                selected: null, isRolling: false,
-                reset() {
-                    this.selected = null; this.isRolling = false;
-                    $('#btn-xiu').classList.remove('btn-selected'); $('#btn-tai').classList.remove('btn-selected');
-                    $('#btn-tx-roll').classList.add('opacity-0', 'pointer-events-none'); $('#tx-result').classList.add('opacity-0');
-                    $('#tx-bet-input').disabled = false;
-                },
-                select(opt) {
-                    app.audio.playClick();
-                    if(this.isRolling) return;
-                    this.selected = opt;
-                    if(opt === 'XIU') { $('#btn-xiu').classList.add('btn-selected'); $('#btn-tai').classList.remove('btn-selected'); } 
-                    else { $('#btn-tai').classList.add('btn-selected'); $('#btn-xiu').classList.remove('btn-selected'); }
-                    $('#btn-tx-roll').classList.remove('opacity-0', 'pointer-events-none');
-                },
-                async roll() {
-                    const bet = parseInt($('#tx-bet-input').value);
-                    if(!app.checkBalance(bet)) return;
-                    this.isRolling = true; $('#tx-bet-input').disabled = true;
-                    $('#btn-tx-roll').classList.add('opacity-50', 'pointer-events-none');
-                    $('#dice-wrapper').classList.add('shaking');
-                    app.audio.playRoll();
-                    await sleep(1200);
-                    const d1 = Math.ceil(Math.random()*6); const d2 = Math.ceil(Math.random()*6); const d3 = Math.ceil(Math.random()*6);
-                    const total = d1+d2+d3;
-                    $('#dice-wrapper').classList.remove('shaking');
-                    const renderDie = (id, val) => {
-                        const el = $(`#die-${id}`); el.dataset.val = val; el.innerHTML = ''; 
-                        const map = { 1:['d5'], 2:['d1','d9'], 3:['d1','d5','d9'], 4:['d1','d3','d7','d9'], 5:['d1','d3','d5','d7','d9'], 6:['d1','d3','d4','d6','d7','d9'] };
-                        map[val].forEach(c => el.innerHTML += `<div class="dot ${c}"></div>`);
-                    };
-                    renderDie(1, d1); renderDie(2, d2); renderDie(3, d3);
-                    let win = false; let change = 0; let type = '';
-                    if(d1===d2 && d2===d3) { type = 'BÃO (TRIPLE)'; change = -bet; } 
-                    else if(total >= 4 && total <= 10) { type = 'XỈU'; win = (this.selected === 'XIU'); change = win ? bet : -bet; } 
-                    else { type = 'TÀI'; win = (this.selected === 'TAI'); change = win ? bet : -bet; }
-                    app.recordTx(change, 'Tai Xiu');
-                    const msgColor = win ? 'text-gold' : 'text-red-500';
-                    const msgText = win ? `+$ ${bet.toLocaleString()}` : `-$ ${bet.toLocaleString()}`;
-                    $('#tx-msg').className = `font-serif text-3xl italic ${msgColor}`;
-                    $('#tx-msg').innerText = win ? "Victoire!" : "Perdu...";
-                    $('#tx-sub').innerText = `${total} Điểm • ${type} • ${msgText}`;
-                    $('#tx-result').classList.remove('opacity-0');
-                    setTimeout(() => {
-                        this.isRolling = false; $('#tx-bet-input').disabled = false;
-                        $('#btn-tx-roll').classList.remove('opacity-50'); $('#btn-tx-roll').classList.add('opacity-0', 'pointer-events-none');
-                        $('#btn-xiu').classList.remove('btn-selected'); $('#btn-tai').classList.remove('btn-selected');
-                        this.selected = null;
-                    }, 2500);
-                }
-            },
-
-            blackjack: {
-                deck: [], playerHand: [], dealerHand: [], gameState: 'BET', currentBet: 0,
-                suits: ['♥', '♦', '♣', '♠'], values: ['2','3','4','5','6','7','8','9','10','J','Q','K','A'],
-                createDeck() {
-                    let d = [];
-                    for(let s of this.suits) for(let v of this.values) d.push({ suit: s, val: v, color: (s==='♥'||s==='♦') ? 'red' : 'black' });
-                    return d.sort(() => Math.random() - 0.5);
-                },
-                getScore(hand) {
-                    let score = 0; let aces = 0;
-                    for(let c of hand) {
-                        if(['J','Q','K'].includes(c.val)) score += 10;
-                        else if(c.val === 'A') { score += 11; aces++; }
-                        else score += parseInt(c.val);
-                    }
-                    while(score > 21 && aces > 0) { score -= 10; aces--; }
-                    return score;
-                },
-                renderCard(card, hidden=false) {
-                    if(hidden) return `<div class="card-bj card-back deal-anim"></div>`;
-                    return `<div class="card-bj ${card.color} ${['J','Q','K','A'].includes(card.val) ? 'gold-border' : ''} deal-anim"><div class="card-top-val">${card.val}<br>${card.suit}</div><div class="card-value-lg">${card.suit}</div><div class="card-top-val self-end rotate-180">${card.val}<br>${card.suit}</div></div>`;
-                },
-                reset() {
-                    $('#bj-dealer-cards').innerHTML = ''; $('#bj-player-cards').innerHTML = '';
-                    $('#bj-player-score').innerText = '0'; $('#bj-dealer-score').innerText = '0';
-                    $('#bj-dealer-score-box').classList.add('opacity-0'); $('#bj-msg').classList.add('opacity-0');
-                    $('#bj-controls-bet').classList.remove('hidden'); $('#bj-controls-play').classList.add('hidden');
-                    this.gameState = 'BET';
-                },
-                async deal() {
-                    const bet = parseInt($('#bj-bet-input').value);
-                    if(!app.checkBalance(bet)) return;
-                    this.currentBet = bet; this.deck = this.createDeck();
-                    this.playerHand = [this.deck.pop(), this.deck.pop()]; this.dealerHand = [this.deck.pop(), this.deck.pop()];
-                    this.gameState = 'PLAY';
-                    $('#bj-controls-bet').classList.add('hidden'); $('#bj-controls-play').classList.remove('hidden');
-                    app.audio.playCard();
-                    this.renderHands(true);
-                    if(this.getScore(this.playerHand) === 21) this.endGame();
-                },
-                hit() {
-                    this.playerHand.push(this.deck.pop()); app.audio.playCard(); this.renderHands(true);
-                    if(this.getScore(this.playerHand) > 21) this.endGame();
-                },
-                async stand() {
-                    while(this.getScore(this.dealerHand) < 17) { await sleep(500); this.dealerHand.push(this.deck.pop()); app.audio.playCard(); this.renderHands(false); }
-                    this.endGame();
-                },
-                renderHands(hideDealer) {
-                    $('#bj-player-cards').innerHTML = this.playerHand.map(c => this.renderCard(c)).join('');
-                    $('#bj-player-score').innerText = this.getScore(this.playerHand);
-                    if(hideDealer && this.gameState === 'PLAY') {
-                         $('#bj-dealer-cards').innerHTML = this.renderCard(this.dealerHand[0]) + this.renderCard(null, true);
-                         $('#bj-dealer-score').innerText = '?'; $('#bj-dealer-score-box').classList.remove('opacity-0');
-                    } else {
-                        $('#bj-dealer-cards').innerHTML = this.dealerHand.map(c => this.renderCard(c)).join('');
-                        $('#bj-dealer-score').innerText = this.getScore(this.dealerHand); $('#bj-dealer-score-box').classList.remove('opacity-0');
-                    }
-                },
-                endGame() {
-                    this.gameState = 'OVER'; this.renderHands(false); $('#bj-controls-play').classList.add('hidden');
-                    const pScore = this.getScore(this.playerHand); const dScore = this.getScore(this.dealerHand);
-                    let result = ''; let points = 0; let bet = this.currentBet;
-                    if(pScore > 21) { result = 'Busted!'; points = -bet; }
-                    else if(dScore > 21) { result = 'Dealer Busted!'; points = bet; }
-                    else if(pScore > dScore) { 
-                        if (pScore == 21 && this.playerHand.length == 2) { result = 'Blackjack!'; points = Math.floor(bet * 1.5); } 
-                        else { result = 'Victoire!'; points = bet; }
-                    }
-                    else if(pScore < dScore) { result = 'Perdu...'; points = -bet; }
-                    else { result = 'Push (Hòa)'; points = 0; }
-                    app.recordTx(points, 'Blackjack');
-                    const msgEl = $('#bj-msg');
-                    msgEl.innerText = `${result} (${points >= 0 ? '+' : ''}$ ${Math.abs(points)})`;
-                    msgEl.className = `font-serif text-3xl italic transition-opacity ${points > 0 ? 'text-gold' : 'text-red-500'}`;
-                    msgEl.classList.remove('opacity-0');
-                    setTimeout(() => { this.reset(); }, 3000);
-                }
-            },
-
-            slots: {
-                isSpinning: false,
-                symbols: [
-                    { id: '7', char: '7', class: 'symbol-7' }, { id: 'diamond', char: '💎', class: 'symbol-diamond' },
-                    { id: 'crown', char: '👑', class: 'symbol-crown' }, { id: 'grape', char: '🍇', class: 'symbol-grape' },
-                    { id: 'bell', char: '🔔', class: 'symbol-bell' }, { id: 'cherry', char: '🍒', class: 'symbol-cherry' },
-                    { id: 'star', char: '⭐', class: 'symbol-star' }, { id: 'lemon', char: '🍋', class: 'symbol-lemon' }
-                ],
-                reset() {
-                    this.isSpinning = false;
-                    $('#slot-msg').innerText = "Prêt?"; $('#slot-msg').className = "font-serif text-2xl text-purple-200 italic";
-                    $('#slot-sub').innerText = "Spin to Win"; $('.win-line').style.display = 'none'; $('#slot-bet-input').disabled = false;
-                },
-                async spin() {
-                    if(this.isSpinning) return;
-                    const bet = parseInt($('#slot-bet-input').value);
-                    if(!app.checkBalance(bet)) return;
-                    this.isSpinning = true; $('.win-line').style.display = 'none';
-                    $('#btn-spin').disabled = true; $('#slot-bet-input').disabled = true;
-                    
-                    const reels = [$('#reel-1'), $('#reel-2'), $('#reel-3')]; const results = [];
-                    
-                    for(let i=0; i<3; i++) {
-                         setTimeout(() => app.audio.playSlotSpin(), i * 150);
-                    }
-
-                    reels.forEach(r => {
-                        r.innerHTML = ''; 
-                        for(let i=0; i<20; i++) {
-                            const randSym = this.symbols[Math.floor(Math.random() * this.symbols.length)];
-                            const div = document.createElement('div'); div.className = `reel-symbol ${randSym.class}`; div.innerText = randSym.char;
-                            r.appendChild(div);
-                        }
-                    });
-                    reels.forEach(r => r.style.transform = `translateY(0px)`); await sleep(50);
-                    reels.forEach((r, i) => {
-                        r.style.transition = `transform ${1.5 + i*0.5}s cubic-bezier(0.1, 0.1, 0.1, 1)`;
-                        const h = 120; const stopIndex = Math.floor(Math.random() * 15) + 2; 
-                        const finalSym = r.children[stopIndex]; results[i] = { char: finalSym.innerText, type: finalSym.className };
-                        const moveY = - (stopIndex * h); 
-                        r.style.transform = `translateY(${moveY}px)`;
-                        setTimeout(() => app.audio.playSlotStop(), (1500 + i*500) - 200);
-                    });
-                    await sleep(2700);
-                    this.checkWin(results, bet);
-                    this.isSpinning = false; $('#btn-spin').disabled = false; $('#slot-bet-input').disabled = false;
-                },
-                checkWin(res, bet) {
-                    const c1 = res[0].char; const c2 = res[1].char; const c3 = res[2].char;
-                    let win = false; let points = -bet; let msg = "Try Again";
-                    if(c1 === '7' && c2 === '7' && c3 === '7') { win = true; points = bet * 50; msg = "JACKPOT! (x50)"; } 
-                    else if(c1 === '💎' && c2 === '💎' && c3 === '💎') { win = true; points = bet * 30; msg = "DIAMOND! (x30)"; } 
-                    else if(c1 === '👑' && c2 === '👑' && c3 === '👑') { win = true; points = bet * 20; msg = "ROYAL! (x20)"; } 
-                    else if(c1 === c2 && c2 === c3) { win = true; points = bet * 10; msg = "Big Win! (x10)"; } 
-                    else if(c1 === c2 || c2 === c3 || c1 === c3) { win = true; points = Math.floor(bet * 1.5); msg = "Petit Win (x1.5)"; } 
-                    else { msg = "Nothing..."; }
-                    app.recordTx(points, 'Slots');
-                    $('#slot-msg').innerText = msg;
-                    $('#slot-msg').className = win ? "font-serif text-3xl text-gold italic animate-bounce" : "font-serif text-2xl text-gray-500 italic";
-                    $('#slot-sub').innerText = win ? `+$ ${points.toLocaleString()} Points` : `-$ ${bet.toLocaleString()} Points`;
-                    if(win && points > bet * 5) $('.win-line').style.display = 'block';
-                }
-            },
-
-            leaderboard: {
-                activeTab: 'global',
-                async render(tab, silent = false) { 
-                    this.activeTab = tab;
-                    $$('#view-leaderboard button[id^="tab-"]').forEach(b => {
-                        b.classList.remove('border-gold', 'text-gold');
-                        b.classList.add('border-transparent', 'text-gray-500');
-                    });
-                    $(`#tab-${tab}`).classList.remove('border-transparent', 'text-gray-500');
-                    $(`#tab-${tab}`).classList.add('border-gold', 'text-gold');
-                    
-                    const container = $('#lb-list');
-                    const data = await app.api.loadLeaderboard(tab);
-                    if(!data || !data.items) return;
-                    
-                    const currentScroll = container.scrollTop;
-                    
-                    if(tab === 'streak') {
-                        container.innerHTML = '';
-                        data.items.forEach(item => {
-                            const sign = item.amount >= 0 ? '+' : '';
-                            const cls = item.amount >= 0 ? 'text-gold' : 'text-red-400';
-                            const row = `<div class="flex justify-between items-center py-3 text-ivory text-sm"><div class="flex flex-col"><span class="font-serif">${item.name}</span><span class="text-xs text-gray-500">${item.game}</span></div><div class="text-right"><span class="font-mono ${cls}">${sign}$ ${item.amount.toLocaleString()}</span></div></div>`;
-                            container.innerHTML += row;
-                        });
-                    } else {
-                        const list = data.items; container.innerHTML = '';
-                        list.forEach((u, idx) => {
-                            let rankIcon = `<span class="text-gray-600 font-mono w-6 text-center">${idx+1}</span>`;
-                            let rowClass = "text-ivory";
-                            if(idx === 0) { rankIcon = '✦'; rowClass = "text-gold font-bold"; }
-                            else if(idx === 1) { rankIcon = '★'; rowClass = "text-yellow-100"; }
-                            else if(idx === 2) { rankIcon = '◆'; rowClass = "text-gray-300"; }
-                            const html = `<div class="rank-row flex justify-between items-center py-3"><div class="flex items-center gap-3"><span class="rank-icon ${idx < 3 ? 'text-gold' : ''}">${rankIcon}</span><span class="${rowClass} font-serif">${u.name}</span></div><span class="font-mono text-sm ${rowClass}">$ ${u.score.toLocaleString()}</span></div>`;
-                            container.innerHTML += html;
-                        });
-                    }
-                    container.scrollTop = currentScroll;
-                },
-                switchTab(tab) { 
-                    app.audio.playClick(); 
-                    $('#lb-list').innerHTML = '<div class="text-xs text-gray-500 py-4">Đang tải...</div>'; 
-                    this.render(tab); 
                 }
             },
             
