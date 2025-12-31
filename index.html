@@ -237,7 +237,8 @@
 
         .float-text {
             position: absolute; font-family: var(--font-serif); font-weight: bold; font-size: 4rem;
-            animation: floatUp 1.5s ease-out forwards; text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            animation: floatUp 0.8s ease-out forwards; 
+            text-shadow: 0 4px 20px rgba(0,0,0,0.8);
             pointer-events: none; z-index: 10000;
         }
 
@@ -259,8 +260,8 @@
         }
         @keyframes floatUp {
             0% { transform: translateY(50px) scale(0.5); opacity: 0; }
-            20% { transform: translateY(0) scale(1.2); opacity: 1; }
-            100% { transform: translateY(-100px) scale(1); opacity: 0; }
+            40% { transform: translateY(0) scale(1.2); opacity: 1; }
+            100% { transform: translateY(-50px) scale(1.1); opacity: 0; }
         }
 
         .avatar-btn {
@@ -724,7 +725,7 @@
 
             <div class="w-full h-full flex flex-col items-center p-6 py-12 bg-[#1a1510]">
                 <h2 class="font-serif text-3xl text-[#e0c080] italic mt-8">Treasure Hunt</h2>
-                <div class="text-xs text-gray-500 uppercase tracking-widest mb-6">4 Holes • 1 Win x36 • 2 Lose 100% • 1 Lose 50%</div>
+                <div class="text-xs text-gray-500 uppercase tracking-widest mb-6">6 Holes • 1 Win x36 • 1 Lose 50% • 4 Lose 100%</div>
 
                 <div class="w-full max-w-sm flex-1 flex flex-col justify-center">
                     <div id="treasure-land" class="treasure-map mb-4">
@@ -1187,7 +1188,7 @@
                     return;
                 }
 
-                const duration = 1500;
+                const duration = 200;
                 const startTime = performance.now();
 
                 function update(time) {
@@ -1230,7 +1231,6 @@
                     
                     this.isRolling = true;
                     app.user.score -= amount;
-                    // Note: Balance is deducted internally but animateBalance is NOT called here.
                     
                     app.audio.playRoll();
                     const dice = [$('#die-1'), $('#die-2'), $('#die-3')];
@@ -1262,12 +1262,13 @@
                         const payout = amount * 2;
                         app.processGameEnd(payout, amount, 'Tai Xiu');
                         msgEl.innerText = "CHIẾN THẮNG!";
-                        msgEl.className = "font-serif text-3xl italic text-green-400";
+                        msgEl.className = "font-serif text-3xl italic text-[#e0c080] font-bold drop-shadow-md";
                         app.triggerWinFx(payout - amount);
                     } else {
                         app.processGameEnd(0, amount, 'Tai Xiu');
                         msgEl.innerText = "THẤT BẠI";
-                        msgEl.className = "font-serif text-3xl italic text-red-500";
+                        msgEl.className = "font-serif text-3xl italic text-red-500 font-bold";
+                        app.triggerLoseFx(amount);
                     }
                     
                     subEl.innerText = `${total} ĐIỂM • ${isTai ? 'TÀI' : 'XỈU'} ${isTriple ? '• BÃO' : ''}`;
@@ -1344,7 +1345,6 @@
                     app.audio.playClick();
                     this.betAmount = amount;
                     app.user.score -= amount;
-                    // Balance deducted internally, UI stays static
                     
                     this.deck = this.createDeck();
                     this.playerHand = [this.deck.pop(), this.deck.pop()];
@@ -1427,28 +1427,28 @@
                     const msgEl = $('#bj-msg');
                     
                     if(res === 'WIN') {
-                        // Regular win 1:1, return bet + profit
                         const pScore = this.calcScore(this.playerHand);
                         const isBJ = pScore === 21 && this.playerHand.length === 2;
                         const payout = isBJ ? this.betAmount * 2.5 : this.betAmount * 2;
                         
                         app.processGameEnd(payout, this.betAmount, 'Blackjack');
                         msgEl.innerText = isBJ ? "BLACKJACK!" : "YOU WIN!";
-                        msgEl.className = "font-serif text-3xl italic text-green-400 shadow-black drop-shadow-lg";
+                        msgEl.className = "font-serif text-3xl italic text-[#e0c080] font-bold drop-shadow-md";
                         app.triggerWinFx(payout - this.betAmount);
                     } else if (res === 'BUST') {
                         app.processGameEnd(0, this.betAmount, 'Blackjack');
                         msgEl.innerText = "BUST!";
-                        msgEl.className = "font-serif text-3xl italic text-red-500 shadow-black drop-shadow-lg";
+                        msgEl.className = "font-serif text-3xl italic text-red-500 font-bold";
+                        app.triggerLoseFx(this.betAmount);
                     } else if (res === 'LOSE') {
                         app.processGameEnd(0, this.betAmount, 'Blackjack');
                         msgEl.innerText = "DEALER WINS";
-                        msgEl.className = "font-serif text-3xl italic text-red-500 shadow-black drop-shadow-lg";
+                        msgEl.className = "font-serif text-3xl italic text-red-500 font-bold";
+                        app.triggerLoseFx(this.betAmount);
                     } else {
-                        // Push, return bet
                         app.processGameEnd(this.betAmount, this.betAmount, 'Blackjack');
                         msgEl.innerText = "PUSH";
-                        msgEl.className = "font-serif text-3xl italic text-gray-300 shadow-black drop-shadow-lg";
+                        msgEl.className = "font-serif text-3xl italic text-gray-300 font-bold";
                     }
                     msgEl.style.opacity = '1';
                 }
@@ -1480,7 +1480,6 @@
                     
                     this.isSpinning = true;
                     app.user.score -= amount;
-                    // Static balance during spin
                     
                     $('#btn-spin').disabled = true;
                     $('#btn-spin').style.opacity = '0.5';
@@ -1492,7 +1491,6 @@
                     const reels = [$('#reel-1'), $('#reel-2'), $('#reel-3')];
                     const result = [];
                     
-                    // Start spin animation
                     reels.forEach(r => {
                         r.style.transition = 'none';
                         r.style.transform = 'translateY(0)';
@@ -1504,7 +1502,6 @@
                         r.style.transform = 'translateY(-1500px)';
                     });
                     
-                    // Determine result
                     for(let i=0; i<3; i++) {
                         await sleep(500 + i*300);
                         const sym = this.symbols[Math.floor(Math.random()*this.symbols.length)];
@@ -1525,32 +1522,37 @@
                         app.audio.playSlotStop();
                     }
                     
-                    // Check win
-                    const allSame = result[0].id === result[1].id && result[1].id === result[2].id;
-                    const pair = result[0].id === result[1].id || result[1].id === result[2].id || result[0].id === result[2].id;
+                    const id1 = result[0].id;
+                    const id2 = result[1].id;
+                    const id3 = result[2].id;
+                    const allSame = id1 === id2 && id2 === id3;
+                    const pair = !allSame && (id1 === id2 || id2 === id3 || id1 === id3);
+                    
                     const msgEl = $('#slot-msg');
                     const subEl = $('#slot-sub');
                     const area = $('#slot-msg-area');
                     
                     if(allSame) {
-                        const winAmt = amount * result[0].val * 5; // e.g. 5x5 = 25x bet
+                        const winAmt = amount * result[0].val * 5; 
                         app.processGameEnd(winAmt, amount, 'Slots');
                         msgEl.innerText = "JACKPOT!";
-                        msgEl.className = "font-serif text-3xl italic text-gold";
+                        msgEl.className = "font-serif text-3xl italic text-[#e0c080] font-bold drop-shadow-md";
                         subEl.innerText = `Win $ ${winAmt.toLocaleString()}`;
                         $('.win-line').style.display = 'block';
                         app.triggerWinFx(winAmt - amount);
                     } else if (pair) {
                          const winAmt = Math.floor(amount * 1.5);
                          app.processGameEnd(winAmt, amount, 'Slots');
-                         msgEl.innerText = "NICE!";
-                         msgEl.className = "font-serif text-3xl italic text-purple-300";
+                         msgEl.innerText = "NICE HIT!";
+                         msgEl.className = "font-serif text-3xl italic text-[#e0c080] font-bold";
                          subEl.innerText = `Win $ ${winAmt.toLocaleString()}`;
+                         app.triggerWinFx(winAmt - amount);
                     } else {
                         app.processGameEnd(0, amount, 'Slots');
                         msgEl.innerText = "Try Again";
-                        msgEl.className = "font-serif text-2xl italic text-gray-400";
+                        msgEl.className = "font-serif text-2xl italic text-red-500 font-bold";
                         subEl.innerText = "";
+                        app.triggerLoseFx(amount);
                     }
                     
                     area.style.opacity = '1';
@@ -1591,7 +1593,6 @@
                     app.audio.playClick();
                     this.betAmount = amount;
                     app.user.score -= amount;
-                    // Balance static
                     this.isPlaying = true;
                     
                     $('#btn-treasure-start').classList.add('opacity-30', 'pointer-events-none');
@@ -1601,21 +1602,21 @@
                     $('#treasure-bet-input').disabled = true;
 
                     this.holes = [];
-                    const types = ['WIN_36', 'LOSS_100', 'LOSS_100', 'LOSS_50'];
+                    const types = ['WIN_36', 'LOSS_50', 'LOSS_100', 'LOSS_100', 'LOSS_100', 'LOSS_100'];
                     for (let i = types.length - 1; i > 0; i--) {
                         const j = Math.floor(Math.random() * (i + 1));
                         [types[i], types[j]] = [types[j], types[i]];
                     }
 
-                    for (let i = 0; i < 4; i++) {
+                    for (let i = 0; i < 6; i++) {
                         let x, y, valid = false;
                         while (!valid) {
-                            x = 15 + Math.random() * 70;
-                            y = 15 + Math.random() * 70;
+                            x = 10 + Math.random() * 80;
+                            y = 10 + Math.random() * 80;
                             valid = true;
                             for (let h of this.holes) {
                                 const dist = Math.hypot(h.x - x, h.y - y);
-                                if (dist < 20) valid = false;
+                                if (dist < 15) valid = false;
                             }
                         }
                         this.holes.push({ x, y, type: types[i], revealed: false });
@@ -1633,7 +1634,7 @@
                     const land = $('#treasure-land');
                     const allEls = land.children;
 
-                    for(let i=0; i<4; i++) {
+                    for(let i=0; i<6; i++) {
                         const h = this.holes[i];
                         const div = allEls[i];
                         div.style.pointerEvents = 'none';
@@ -2573,7 +2574,6 @@
                 app.animateBalance(this.user.score);
             },
 
-            // Legacy support for non-game transaction (like transfer)
             recordTx(amount, game) {
                 this.user.score += amount;
                 this.user.history.push({ date: Date.now(), amount: amount, game: game });
@@ -2588,7 +2588,7 @@
                 const overlay = $('#fx-overlay');
                 overlay.className = 'fx-flash-gold absolute inset-0 z-[9998] flex items-center justify-center';
                 const text = document.createElement('div');
-                text.className = 'float-text text-gold';
+                text.className = 'float-text font-serif text-[#e0c080] font-bold text-5xl italic drop-shadow-[0_2px_10px_rgba(255,215,0,0.5)]';
                 text.innerText = `+$ ${amount.toLocaleString()}`;
                 overlay.appendChild(text);
                 this.spawnConfetti();
@@ -2607,7 +2607,7 @@
                 appEl.classList.add('fx-screen-shake');
                 overlay.className = 'fx-flash-red absolute inset-0 z-[9998] flex items-center justify-center';
                 const text = document.createElement('div');
-                text.className = 'float-text text-red-500';
+                text.className = 'float-text font-serif text-red-500 font-bold text-5xl italic drop-shadow-[0_2px_10px_rgba(200,0,0,0.5)]';
                 text.innerText = `$ ${amount.toLocaleString()}`;
                 overlay.appendChild(text);
                 setTimeout(() => {
