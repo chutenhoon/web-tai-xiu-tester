@@ -277,9 +277,6 @@
         .chat-msg span { font-weight: bold; margin-right: 4px; }
         .player-seat { display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.5; transition: 0.3s; }
         .player-seat.active { opacity: 1; }
-        .avatar-online { width: 50px; height: 50px; border-radius: 50%; background: #222; border: 2px solid #444; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .avatar-online.p1 { border-color: var(--color-gold); box-shadow: 0 0 10px rgba(209,178,124,0.3); }
-        .avatar-online.p2 { border-color: #B56576; box-shadow: 0 0 10px rgba(181,101,118,0.3); }
         
         .bubble-pop { animation: bubblePop 0.3s ease-out; }
         @keyframes bubblePop { 0% { transform: scale(0.5); opacity: 0; } 80% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
@@ -341,10 +338,16 @@
         .trade-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
         .btn-leverage.active { border-color: var(--color-gold); color: var(--color-gold); background: rgba(209,178,124,0.1); }
         .btn-time.active { background: rgba(255,255,255,0.1); border-color: white; color: white; }
-        .btn-res.active { color: var(--color-gold); background: rgba(209,178,124,0.1); border: 1px solid rgba(209, 178, 124, 0.3); }
         .candle-green { background: #22c55e; }
         .candle-red { background: #ef4444; }
         
+        /* Desktop override for full screen trading */
+        #app.full-screen-mode {
+            max-width: 100% !important;
+            width: 100% !important;
+            height: 100dvh !important;
+            border-radius: 0;
+        }
         @media (min-width: 1024px) {
              #view-trading .flex-col {
                 max-width: 100% !important;
@@ -475,17 +478,6 @@
                         <div class="flex justify-end"><span class="text-green-400 text-sm uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Trade →</span></div>
                     </div>
 
-                    <div onclick="app.gotoGame('online')" class="game-card p-6 rounded-lg cursor-pointer group flex flex-col justify-between h-40">
-                        <div>
-                            <div class="flex justify-between items-start">
-                                <h3 class="font-serif text-2xl text-ivory italic group-hover:text-gold transition-colors">Tables en Ligne</h3>
-                                <span class="text-[10px] border border-blue-800 text-blue-500 px-2 py-0.5 rounded uppercase">PvP</span>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-2 font-sans">Đấu trường • Tạo phòng • Chat</p>
-                        </div>
-                        <div class="flex justify-end"><span class="text-gold text-sm uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Rejoindre →</span></div>
-                    </div>
-
                     <div class="mt-8 mb-4">
                          <h3 class="text-[10px] text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
                              <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
@@ -597,7 +589,7 @@
                 <button onclick="app.switchView('view-hall')" class="text-gold font-serif italic hover:opacity-70 text-lg">← Exit</button>
             </div>
 
-            <div class="flex flex-col h-full pt-16 pb-4 px-4 w-full">
+            <div class="flex flex-col h-full pt-16 pb-4 px-4 w-full max-w-full">
                 <div class="flex justify-between items-end mb-2">
                     <div>
                         <h2 class="font-serif text-2xl text-white italic">DeJeux/USD</h2>
@@ -612,11 +604,9 @@
                     </div>
                 </div>
                 
-                <!-- Resolution Select -->
-                 <div class="flex gap-2 mb-2">
-                    <button onclick="app.trading.setRes(1)" id="btn-res-1" class="btn-res active text-[10px] px-2 py-0.5 rounded text-gray-400 hover:text-white transition">1s</button>
-                    <button onclick="app.trading.setRes(5)" id="btn-res-5" class="btn-res text-[10px] px-2 py-0.5 rounded text-gray-400 hover:text-white transition">5s</button>
-                    <button onclick="app.trading.setRes(60)" id="btn-res-60" class="btn-res text-[10px] px-2 py-0.5 rounded text-gray-400 hover:text-white transition">1m</button>
+                <div class="flex gap-2 mb-2 items-center">
+                    <span class="text-[10px] text-gray-500 uppercase tracking-widest mr-2">Timeframe</span>
+                    <span class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white font-bold">1s</span>
                 </div>
 
                 <!-- Canvas Chart (Flex Grow to fill space) -->
@@ -636,16 +626,16 @@
                     </div>
                 </div>
 
-                <!-- Controls (Compacted) -->
-                <div class="flex flex-col justify-end space-y-3">
-                    <div class="grid grid-cols-2 gap-4">
+                <!-- Controls -->
+                <div class="flex flex-col justify-end space-y-3 lg:flex-row lg:space-y-0 lg:gap-6 lg:items-end lg:bg-[#151518] lg:p-4 lg:rounded-lg lg:border lg:border-white/5">
+                    <div class="grid grid-cols-2 gap-4 lg:flex-1">
                          <!-- Time -->
                         <div>
-                            <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Time</p>
+                            <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Duration</p>
                             <div class="flex gap-1 bg-white/5 p-1 rounded-lg">
                                 <button onclick="app.trading.setTime(10)" id="btn-time-10" class="flex-1 py-1.5 text-xs font-bold rounded text-gray-400 btn-time hover:text-white transition">10s</button>
-                                <button onclick="app.trading.setTime(20)" id="btn-time-20" class="flex-1 py-1.5 text-xs font-bold rounded text-gray-400 btn-time hover:text-white transition">20s</button>
                                 <button onclick="app.trading.setTime(30)" id="btn-time-30" class="flex-1 py-1.5 text-xs font-bold rounded text-white bg-white/10 btn-time active hover:text-white transition">30s</button>
+                                <button onclick="app.trading.setTime(60)" id="btn-time-60" class="flex-1 py-1.5 text-xs font-bold rounded text-gray-400 btn-time hover:text-white transition">60s</button>
                             </div>
                         </div>
                          <!-- Leverage -->
@@ -658,12 +648,12 @@
                     </div>
 
                     <!-- Amount & Actions -->
-                    <div class="flex gap-3 items-end">
-                        <div class="w-1/3">
+                    <div class="flex gap-3 items-end lg:flex-[2]">
+                        <div class="w-1/3 lg:w-auto lg:flex-1">
                              <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Amount</p>
                              <input type="number" id="trade-amount" class="w-full bg-white/5 border border-white/10 rounded p-2 text-center text-white font-mono outline-none focus:border-gold transition text-sm font-bold" value="100">
                         </div>
-                        <div class="flex-1 flex gap-2">
+                        <div class="flex-1 flex gap-2 lg:flex-[2]">
                             <button onclick="app.trading.placeOrder('up')" id="btn-long" class="flex-1 bg-green-500/10 border border-green-500/50 text-green-400 py-3 rounded font-bold hover:bg-green-500 hover:text-black transition shadow-[0_0_15px_rgba(74,222,128,0.1)]">
                                 LONG
                             </button>
@@ -841,10 +831,6 @@
                 </div>
                 <div id="lb-list" class="flex-1 overflow-y-auto deepglass rounded p-4 space-y-3"></div>
              </div>
-        </section>
-
-        <section id="view-online" class="view-section z-20">
-            <div id="online-wrapper" class="h-full flex flex-col p-6"></div>
         </section>
 
     </div>
@@ -1283,23 +1269,28 @@
                 }
             },
 
-            // Trading Logic Object (Candlestick Version)
             trading: {
                 chartCtx: null,
                 isTrading: false,
                 currentPrice: 54000,
-                candles: [], // {o,h,l,c,t}
+                candles: [], 
                 currentCandle: null,
-                betTime: 30, // seconds
+                betTime: 30, 
                 leverage: 10,
                 activeOrder: null, 
                 interval: null,
-                candleResolution: 1, // seconds
+                candleResolution: 1, 
                 
+                // Advanced Algorithm Params
+                volatility: 0.8,
+                momentum: 0,
+                targetPrice: 54000,
+                noise: 0,
+                indicators: { sma: [] },
+
                 init() {
                     const cvs = document.getElementById('tradeChart');
                     if (cvs) {
-                        // High DPI Canvas
                         const dpr = window.devicePixelRatio || 1;
                         const rect = cvs.getBoundingClientRect();
                         cvs.width = rect.width * dpr;
@@ -1307,21 +1298,35 @@
                         this.chartCtx = cvs.getContext('2d');
                         this.chartCtx.scale(dpr, dpr);
                         
-                        // Seed history candles
+                        // Seed history smoothly
                         this.candles = [];
+                        this.indicators.sma = [];
                         let p = 54000;
                         const now = Math.floor(Date.now() / 1000);
                         
-                        for(let i=0; i<40; i++) {
+                        // Generate enough history for SMA
+                        for(let i=0; i<60; i++) {
+                            // Geometric Brownian Motion step
+                            const drift = 0;
+                            const shock = (Math.random() - 0.5) * 15; // Initial seed volatility
+                            p = p + drift + shock;
+                            
                             const o = p;
-                            const c = p + (Math.random() - 0.5) * 30;
-                            const h = Math.max(o, c) + Math.random() * 10;
-                            const l = Math.min(o, c) - Math.random() * 10;
-                            this.candles.push({ o, h, l, c, t: now - (40-i)*this.candleResolution });
+                            const c = p + (Math.random() - 0.5) * 5;
+                            const h = Math.max(o, c) + Math.random() * 2;
+                            const l = Math.min(o, c) - Math.random() * 2;
+                            this.candles.push({ o, h, l, c, t: now - (60-i)*this.candleResolution });
+                            
+                            // Calc SMA
+                            const slice = this.candles.slice(Math.max(0, this.candles.length - 20));
+                            const avg = slice.reduce((sum, c) => sum + c.c, 0) / slice.length;
+                            this.indicators.sma.push(avg);
+                            
                             p = c;
                         }
                         this.currentPrice = p;
                         this.currentCandle = { o: p, h: p, l: p, c: p, t: now };
+                        this.targetPrice = p; // Reset target
                         
                         this.startLoop();
                     }
@@ -1336,19 +1341,12 @@
                         b.classList.add('text-gray-400');
                     });
                     const btn = document.getElementById(`btn-time-${t}`);
-                    btn.classList.add('active', 'bg-white/10', 'text-white');
-                    btn.classList.remove('text-gray-400');
+                    if(btn) {
+                        btn.classList.add('active', 'bg-white/10', 'text-white');
+                        btn.classList.remove('text-gray-400');
+                    }
                 },
 
-                setRes(r) {
-                    app.audio.playClick();
-                    this.candleResolution = r;
-                    $$('.btn-res').forEach(b => b.classList.remove('active'));
-                    document.getElementById(`btn-res-${r}`).classList.add('active');
-                    // Reset candles for visual consistency
-                    this.candles = this.candles.slice(-10); // keep a few
-                },
-                
                 setLeverage(l) {
                     app.audio.playClick();
                     if(this.isTrading) return;
@@ -1374,16 +1372,14 @@
                         endTime: Date.now() + (this.betTime * 1000)
                     };
                     
-                    // Lock inputs
                     document.getElementById('trade-amount').disabled = true;
                     document.querySelector('.trade-slider').disabled = true;
-                    $$('.btn-time, .btn-res, #btn-long, #btn-short').forEach(b => b.disabled = true);
+                    $$('.btn-time, #btn-long, #btn-short').forEach(b => b.disabled = true);
                     $$('#btn-long, #btn-short').forEach(b => b.classList.add('opacity-50'));
                     
                     document.getElementById('trade-timer-overlay').classList.remove('hidden');
                     document.getElementById('trade-pnl-live').classList.remove('hidden');
                     
-                    // Deduct balance visually
                     app.user.score -= bet;
                 },
                 
@@ -1399,7 +1395,6 @@
                     const profit = payout - this.activeOrder.bet;
                     app.recordTx(Math.round(profit), 'Trading 30s');
                     
-                    // UI Result
                     const box = document.getElementById('trade-result-overlay');
                     const title = document.getElementById('trade-res-title');
                     const amt = document.getElementById('trade-res-amt');
@@ -1432,10 +1427,9 @@
                          document.getElementById('trade-result-box').classList.add('scale-90');
                          document.getElementById('trade-result-box').classList.remove('scale-100');
                          
-                         // Unlock controls
                         document.getElementById('trade-amount').disabled = false;
                         document.querySelector('.trade-slider').disabled = false;
-                        $$('.btn-time, .btn-res, #btn-long, #btn-short').forEach(b => b.disabled = false);
+                        $$('.btn-time, #btn-long, #btn-short').forEach(b => b.disabled = false);
                         $$('#btn-long, #btn-short').forEach(b => b.classList.remove('opacity-50'));
                         document.getElementById('trade-timer-overlay').classList.add('hidden');
                         document.getElementById('trade-pnl-live').classList.add('hidden');
@@ -1456,14 +1450,22 @@
                 },
                 
                 updatePrice() {
-                    // Volatility
-                    const vol = this.isTrading ? (3 + (this.leverage / 15)) : 2; 
-                    const change = (Math.random() - 0.5) * vol; // Slower tick
+                    // --- Advanced Volatility Algorithm ---
+                    // Simulate market microstructure noise + trend
                     
-                    // Add small trend bias
-                    const trend = Math.sin(Date.now() / 5000) * 1; 
+                    // 1. Change volatility randomly
+                    if(Math.random() < 0.05) this.volatility = 0.5 + Math.random() * 2.5; 
                     
-                    this.currentPrice += (change + trend);
+                    // 2. Momentum (Trend following)
+                    // If moving up, higher chance to keep moving up, but with mean reversion
+                    this.momentum *= 0.95; // decay
+                    if(Math.random() < 0.1) this.momentum += (Math.random() - 0.5) * 2;
+                    
+                    // 3. Calculate step
+                    const noise = (Math.random() - 0.5) * this.volatility * (this.isTrading ? 1.5 : 1);
+                    const step = this.momentum + noise;
+                    
+                    this.currentPrice += step;
                     
                     // Update Current Candle
                     this.currentCandle.c = this.currentPrice;
@@ -1471,43 +1473,47 @@
                     this.currentCandle.l = Math.min(this.currentCandle.l, this.currentPrice);
                     
                     const now = Math.floor(Date.now() / 1000);
-                    // Check if new candle needed
                     if (now >= this.currentCandle.t + this.candleResolution) {
                          this.candles.push({ ...this.currentCandle });
+                         
+                         // Update Indicator (SMA)
+                         const slice = this.candles.slice(Math.max(0, this.candles.length - 20));
+                         const avg = slice.reduce((sum, c) => sum + c.c, 0) / slice.length;
+                         this.indicators.sma.push(avg);
+                         
                          this.currentCandle = { o: this.currentPrice, h: this.currentPrice, l: this.currentPrice, c: this.currentPrice, t: now };
-                         if(this.candles.length > 50) this.candles.shift();
+                         if(this.candles.length > 60) {
+                             this.candles.shift();
+                             this.indicators.sma.shift();
+                         }
                     }
                     
-                    // DOM Updates
                     const elPrice = document.getElementById('trade-price');
                     const elChange = document.getElementById('trade-change');
                     if(elPrice) {
                         elPrice.innerText = this.currentPrice.toFixed(2);
-                        const diff = this.currentPrice - this.candles[0].o;
-                        const pct = (diff / this.candles[0].o) * 100;
+                        const startPrice = this.candles[0] ? this.candles[0].o : this.currentPrice;
+                        const diff = this.currentPrice - startPrice;
+                        const pct = (diff / startPrice) * 100;
                         elChange.innerText = (diff>=0?'+':'') + pct.toFixed(2) + '%';
                         elChange.className = `text-xs ${diff >= 0 ? 'text-green-500' : 'text-red-500'}`;
                         elPrice.className = `font-mono text-xl font-bold ${diff >= 0 ? 'text-green-400' : 'text-red-400'}`;
                     }
                     
-                    // Active Trade Logic
                     if(this.isTrading && this.activeOrder) {
                         const nowMs = Date.now();
                         const timeLeft = Math.max(0, this.activeOrder.endTime - nowMs);
                         
                         document.getElementById('trade-countdown').innerText = (timeLeft/1000).toFixed(1) + 's';
                         
-                        // PnL
                         const priceDiff = this.currentPrice - this.activeOrder.entry;
                         const directionMult = this.activeOrder.dir === 'up' ? 1 : -1;
                         let pnlPercent = (priceDiff / this.activeOrder.entry) * this.activeOrder.lev * directionMult;
                         let currentPnL = this.activeOrder.bet * pnlPercent;
                         
-                        // Live Balance Simulation (Bet was already deducted, so we add back potential payout - bet)
                         const floatBalance = app.user.score + (this.activeOrder.bet + currentPnL);
                         $$('.user-balance-display').forEach(el => el.textContent = '$ ' + Math.max(0, Math.floor(floatBalance)).toLocaleString());
 
-                        // Live PnL Badge
                         const pnlEl = document.getElementById('pnl-live-val');
                         pnlEl.innerText = (currentPnL>=0?'+':'') + '$ ' + Math.round(currentPnL).toLocaleString();
                         pnlEl.className = `font-mono text-xl font-bold ${currentPnL >= 0 ? 'text-green-400' : 'text-red-500'}`;
@@ -1520,7 +1526,6 @@
                     const ctx = this.chartCtx;
                     if (!ctx) return;
                     
-                    // Handle Resize
                     const cvs = ctx.canvas;
                     const parent = cvs.parentElement;
                     const dpr = window.devicePixelRatio || 1;
@@ -1543,20 +1548,35 @@
                     for(let i=0; i<h; i+=50) { ctx.moveTo(0,i); ctx.lineTo(w,i); }
                     ctx.stroke();
                     
-                    // Scales
+                    // Price Scaling
                     const allCandles = [...this.candles, this.currentCandle];
                     let minP = Infinity, maxP = -Infinity;
                     allCandles.forEach(c => { minP = Math.min(minP, c.l); maxP = Math.max(maxP, c.h); });
-                    const padding = (maxP - minP) * 0.2;
+                    const padding = (maxP - minP) * 0.15;
                     const range = (maxP - minP) + (padding*2) || 1;
                     
                     const getY = (price) => h - ((price - (minP - padding)) / range) * h;
                     
-                    // Draw Candles
-                    const count = allCandles.length;
+                    const count = 60; // Fixed view window
                     const candleWidth = (w / count) * 0.7;
                     const spacing = (w / count) * 0.3;
                     
+                    // Draw SMA Indicator
+                    ctx.beginPath();
+                    this.indicators.sma.forEach((val, i) => {
+                        // Align SMA with candles based on index. SMA array might be shorter initially.
+                        // SMA[0] corresponds to candle[0].
+                        if(i < this.candles.length) {
+                            const x = i * (candleWidth + spacing) + spacing/2 + candleWidth/2;
+                            const y = getY(val);
+                            if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+                        }
+                    });
+                    ctx.strokeStyle = '#facc15'; // Yellow
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+
+                    // Draw Candles
                     allCandles.forEach((c, i) => {
                         const x = i * (candleWidth + spacing) + spacing/2;
                         const yO = getY(c.o);
@@ -1576,11 +1596,11 @@
                         
                         // Body
                         let bodyH = Math.abs(yC - yO);
-                        if(bodyH < 1) bodyH = 1; // min height
+                        if(bodyH < 1) bodyH = 1;
                         ctx.fillRect(x, Math.min(yO, yC), candleWidth, bodyH);
                     });
                     
-                    // Trade Lines
+                    // Entry Line
                     if(this.isTrading && this.activeOrder) {
                         const yEntry = getY(this.activeOrder.entry);
                         ctx.beginPath();
@@ -1602,7 +1622,9 @@
                     ctx.moveTo(0, yCurr);
                     ctx.lineTo(w, yCurr);
                     ctx.strokeStyle = 'rgba(209, 178, 124, 0.5)';
+                    ctx.setLineDash([2, 2]);
                     ctx.stroke();
+                    ctx.setLineDash([]);
                     
                     // Current Price Badge
                     ctx.fillStyle = '#D1B27C';
@@ -1624,9 +1646,9 @@
                     this.switchView('view-hall');
                     this.updateDash();
                 }
-                this.online.init();
+                // Removed Online Init
                 
-                // Init Trading (headless until viewed)
+                // Init Trading immediately to prevent jump
                 this.trading.init();
                 
                 this.animLoop();
@@ -1680,26 +1702,23 @@
                     el.style.pointerEvents = 'none';
                 });
                 
-                // Desktop responsiveness fix for trading view
                 const mainApp = document.getElementById('app');
                 if(id === 'view-trading') {
-                     // Allow wider width on desktop for trading
+                     // Full screen Desktop
                      mainApp.classList.remove('max-w-md');
-                     mainApp.classList.add('lg:max-w-5xl');
+                     mainApp.classList.add('full-screen-mode'); // New class for full control
                 } else {
                      mainApp.classList.add('max-w-md');
-                     mainApp.classList.remove('lg:max-w-5xl');
+                     mainApp.classList.remove('full-screen-mode');
                 }
                 
                 setTimeout(() => {
                     $(`#${id}`).classList.add('active');
                     $(`#${id}`).style.pointerEvents = 'auto';
                     
-                    // Resize Trading Chart if entering trading view
                     if(id === 'view-trading' && app.trading.chartCtx) {
                          const cvs = document.getElementById('tradeChart');
                          const rect = cvs.parentElement.getBoundingClientRect();
-                         // Small delay to let flexbox settle
                          setTimeout(() => {
                              const dpr = window.devicePixelRatio || 1;
                              cvs.width = rect.width * dpr;
@@ -1832,7 +1851,6 @@
                 else if(type === 'blackjack') { this.blackjack.reset(); this.switchView('view-blackjack'); } 
                 else if(type === 'slots') { this.slots.reset(); this.switchView('view-slots'); } 
                 else if(type === 'trading') { this.switchView('view-trading'); }
-                else if(type === 'online') { this.online.renderLobby(); this.switchView('view-online'); }
             },
 
             showProfile() {
@@ -2157,108 +2175,6 @@
                 }
             },
             
-            online: {
-                activeRoom: null,
-                rooms: [ { id: '101', name: "Sòng Đại Gia", game: "TaiXiu", bet: 5000, players: 1 }, { id: '102', name: "Vui Vẻ 1", game: "TaiXiu", bet: 100, players: 1 }, { id: '103', name: "Slots Race", game: "Slots", bet: 500, players: 1 }, { id: '104', name: "PvP High Roller", game: "TaiXiu", bet: 10000, players: 1 } ],
-                chatLog: [], botNames: ["Minh Long", "Sarah", "Đức Anh", "Bảo Ngọc", "Tommy", "Huyền My"],
-                init() {},
-                renderLobby() {
-                    const wrap = $('#online-wrapper');
-                    wrap.innerHTML = `<div class="flex items-center gap-3 mb-6"><button onclick="app.switchView('view-hall')" class="text-gold font-serif italic w-20">← Retour</button><div class="sound-toggle-btn sound-icon-game" onclick="app.audio.toggle()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg></div></div><h2 class="font-serif text-3xl text-white italic mb-2">Online Lobby</h2><div class="flex justify-between items-center mb-6"><p class="text-xs text-gray-500">Chọn phòng hoặc tạo phòng mới.</p><span class="text-xs text-gold border border-gold px-2 py-1 rounded">$ ${app.user.score.toLocaleString()}</span></div><div id="room-list" class="flex-1 overflow-y-auto space-y-3 pb-20 no-scrollbar">${this.rooms.map(r => `<div onclick="app.online.joinRoom('${r.id}')" class="deepglass p-4 rounded flex justify-between items-center cursor-pointer hover:border-gold transition-colors group"><div><div class="flex items-center gap-2"><p class="text-white font-bold group-hover:text-gold">${r.name}</p><span class="text-[9px] bg-white/10 px-1 rounded text-gray-400">${r.game}</span></div><p class="text-xs text-gray-500 mt-1">Bet: <span class="text-gold">$ ${r.bet.toLocaleString()}</span> • ${r.players}/2</p></div><button class="btn-lux py-1 px-3 text-[10px] border-white/20 text-gray-400 group-hover:border-gold group-hover:text-gold">Vào</button></div>`).join('')}</div><div class="mt-auto pt-4"><button onclick="app.online.showCreateModal()" class="btn-lux w-full text-gold border-gold bg-gold/5">+ TẠO PHÒNG MỚI</button></div>`;
-                },
-                showCreateModal() {
-                    const wrap = $('#online-wrapper');
-                    wrap.innerHTML = `<button onclick="app.online.renderLobby()" class="text-gold font-serif italic mb-6">← Hủy</button><h2 class="font-serif text-3xl text-white italic mb-8">Tạo Phòng</h2><div class="space-y-6"><div><label class="text-xs text-gray-500 uppercase block mb-2">Tên Phòng</label><input id="new-room-name" type="text" class="input-lux text-left" value="${app.user.name}'s Room"></div><div><label class="text-xs text-gray-500 uppercase block mb-2">Chế Độ Chơi</label><div class="flex gap-2"><button onclick="app.online.selectMode('TaiXiu')" id="sel-mode-tx" class="btn-lux flex-1 btn-selected">TÀI XỈU</button><button onclick="app.online.selectMode('Slots')" id="sel-mode-sl" class="btn-lux flex-1 border-white/20 text-gray-400">SLOTS</button></div></div><div><label class="text-xs text-gray-500 uppercase block mb-2">Mức Cược</label><input id="new-room-bet" type="number" class="input-lux" value="1000"><div class="flex justify-between mt-2"><button onclick="$('#new-room-bet').value=100" class="text-[10px] text-gray-500 hover:text-white">100</button><button onclick="$('#new-room-bet').value=1000" class="text-[10px] text-gray-500 hover:text-white">1K</button><button onclick="$('#new-room-bet').value=5000" class="text-[10px] text-gray-500 hover:text-white">5K</button><button onclick="$('#new-room-bet').value=10000" class="text-[10px] text-gray-500 hover:text-white">10K</button></div></div></div><div class="mt-auto pt-8"><button onclick="app.online.confirmCreate()" class="btn-lux w-full bg-gold text-black font-bold border-gold hover:bg-white">BẮT ĐẦU</button></div>`;
-                    this.tempMode = 'TaiXiu';
-                },
-                selectMode(m) {
-                    app.audio.playClick(); this.tempMode = m;
-                    $('#sel-mode-tx').className = m==='TaiXiu' ? 'btn-lux flex-1 btn-selected' : 'btn-lux flex-1 border-white/20 text-gray-400';
-                    $('#sel-mode-sl').className = m==='Slots' ? 'btn-lux flex-1 btn-selected' : 'btn-lux flex-1 border-white/20 text-gray-400';
-                },
-                confirmCreate() {
-                    app.audio.playClick();
-                    const name = $('#new-room-name').value; const bet = parseInt($('#new-room-bet').value); const id = Math.floor(Math.random()*9000+1000).toString();
-                    if(!name || isNaN(bet) || bet < 100) return alert("Vui lòng kiểm tra lại thông tin!");
-                    if(bet > app.user.score) return alert("Không đủ tiền cược!");
-                    const newRoom = { id, name, game: this.tempMode, bet, players: 1, isHost: true };
-                    this.rooms.unshift(newRoom); this.joinRoom(id);
-                },
-                joinRoom(id) {
-                    app.audio.playClick();
-                    this.activeRoom = this.rooms.find(r => r.id === id); if(!this.activeRoom) return;
-                    this.chatLog = [{u: 'System', m: `Chào mừng đến ${this.activeRoom.name}!`}];
-                    this.botName = this.botNames[Math.floor(Math.random() * this.botNames.length)];
-                    this.renderRoom();
-                    if(this.activeRoom.players < 2) {
-                        setTimeout(() => {
-                            this.activeRoom.players = 2; this.addChat(this.botName, "Hello! Solo không?"); this.renderRoom();
-                            if(this.activeRoom.game === 'TaiXiu') this.startTaiXiuRound();
-                        }, 2000);
-                    }
-                },
-                renderRoom() {
-                    const r = this.activeRoom; const wrap = $('#online-wrapper'); let gameHtml = '';
-                    if(r.game === 'TaiXiu') {
-                        gameHtml = `<div class="flex-1 flex flex-col items-center justify-center relative mb-4"><div class="absolute top-0 w-full flex justify-between text-[10px] text-gray-500 uppercase tracking-widest"><span>P1: ${app.user.name}</span><span>P2: ${this.botName}</span></div><div id="pvp-dice" class="flex gap-2 p-4 deepglass rounded-lg mb-4 transition-transform"><div class="w-8 h-8 bg-white rounded flex items-center justify-center text-black font-bold">?</div><div class="w-8 h-8 bg-white rounded flex items-center justify-center text-black font-bold">?</div><div class="w-8 h-8 bg-white rounded flex items-center justify-center text-black font-bold">?</div></div><div class="w-full flex justify-between gap-4"><div class="player-seat active"><div class="avatar-online p1"><span class="text-xs">YOU</span></div><div id="p1-choice" class="text-xs text-gold font-bold h-4">...</div></div><div class="text-center"><div id="pvp-status" class="text-gold font-serif text-xl italic mb-1">Waiting...</div><div class="text-[10px] text-gray-500">POT: $ ${(r.bet*2).toLocaleString()}</div></div><div class="player-seat ${r.players>1?'active':''}">    <div class="avatar-online p2"><span class="text-xs">BOT</span></div>    <div id="p2-choice" class="text-xs text-red-400 font-bold h-4">${r.players>1?'...':'Waiting'}</div></div></div></div><div id="pvp-controls" class="grid grid-cols-2 gap-2 mb-2 ${r.players<2?'opacity-50 pointer-events-none':''}"><button onclick="app.online.playerPick('XIU')" class="btn-lux border-white/20 hover:bg-white/10">XỈU (4-10)</button><button onclick="app.online.playerPick('TAI')" class="btn-lux border-white/20 hover:bg-white/10">TÀI (11-17)</button></div>`;
-                    } else {
-                        gameHtml = `<div class="flex-1 flex flex-col items-center justify-center"><p class="text-gray-500 text-xs text-center mb-4">Chế độ Slots PvP đang bảo trì.<br>Vui lòng thử lại sau.</p><button onclick="app.online.renderLobby()" class="btn-lux text-xs">Quay lại Lobby</button></div>`;
-                    }
-                    wrap.innerHTML = `<div class="flex justify-between items-center mb-2 pb-2 border-b border-white/10"><div class="flex items-center gap-2"><button onclick="app.online.leaveRoom()" class="text-gray-500 text-xs hover:text-white">← Rời</button><div class="sound-toggle-btn sound-icon-game" onclick="app.audio.toggle()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg></div></div><span class="text-xs text-gold">${r.name} ($ ${r.bet.toLocaleString()})</span><span class="text-[10px] bg-green-900/30 text-green-500 px-2 rounded border border-green-900">LIVE</span></div>${gameHtml}<div class="mt-auto"><div id="chat-box" class="chat-box no-scrollbar">${this.chatLog.map(c => `<div class="chat-msg ${c.u==='System'?'text-gray-500 italic':'text-gray-300'}"><span class="${c.u===app.user.name?'text-gold':'text-purple-400'}">${c.u}:</span>${c.m}</div>`).join('')}</div><div class="flex gap-2"><input id="chat-input" type="text" class="input-lux text-left py-1 text-sm" placeholder="Chat..." onkeypress="if(event.key==='Enter') app.online.sendChat()"><button onclick="app.online.sendChat()" class="btn-lux px-3 py-1 border-white/20 text-xs">></button></div><div class="flex gap-1 mt-2 overflow-x-auto pb-1 no-scrollbar"><button onclick="app.online.sendEmoji('😎')" class="btn-preset px-2 text-lg">😎</button><button onclick="app.online.sendEmoji('😭')" class="btn-preset px-2 text-lg">😭</button><button onclick="app.online.sendEmoji('🤑')" class="btn-preset px-2 text-lg">🤑</button><button onclick="app.online.sendEmoji('😡')" class="btn-preset px-2 text-lg">😡</button><button onclick="app.online.sendEmoji('Xin chào')" class="btn-preset px-2 text-xs w-auto whitespace-nowrap">Xin chào</button><button onclick="app.online.sendEmoji('Chơi lớn đi')" class="btn-preset px-2 text-xs w-auto whitespace-nowrap">All-in?</button></div></div>`;
-                    const cb = document.getElementById('chat-box'); if(cb) cb.scrollTop = cb.scrollHeight;
-                },
-                addChat(u, m) {
-                    this.chatLog.push({u, m}); if(this.chatLog.length > 50) this.chatLog.shift();
-                    const cb = document.getElementById('chat-box');
-                    if(cb) { cb.innerHTML = this.chatLog.map(c => `<div class="chat-msg ${c.u==='System'?'text-gray-500 italic':'text-gray-300'}"><span class="${c.u===app.user.name?'text-gold':'text-purple-400'}">${c.u}:</span>${c.m}</div>`).join(''); cb.scrollTop = cb.scrollHeight; }
-                },
-                sendChat() {
-                    const inp = $('#chat-input'); const msg = inp.value.trim(); if(!msg) return;
-                    this.addChat(app.user.name, msg); inp.value = '';
-                    if(Math.random() > 0.7 && this.activeRoom.players > 1) { setTimeout(() => { const replies = ["Ghê nha", "Sợ gì", "Chơi tiếp", "Haha", "Hên thôi"]; this.addChat(this.botName, replies[Math.floor(Math.random()*replies.length)]); }, 1500); }
-                },
-                sendEmoji(e) { this.addChat(app.user.name, e); },
-                leaveRoom() { if(confirm("Rời phòng?")) { this.activeRoom = null; this.renderLobby(); } },
-                isRoundActive: false, playerChoice: null,
-                startTaiXiuRound() {
-                    if(!this.activeRoom) return; this.isRoundActive = true; this.playerChoice = null;
-                    $('#pvp-status').innerText = "Đặt cửa đi..."; $('#p1-choice').innerText = "..."; $('#p2-choice').innerText = "...";
-                    $('#pvp-controls').classList.remove('opacity-50', 'pointer-events-none');
-                },
-                playerPick(choice) {
-                    app.audio.playClick();
-                    if(!this.isRoundActive) return; if(!app.checkBalance(this.activeRoom.bet)) return;
-                    this.playerChoice = choice; this.isRoundActive = false;
-                    $('#p1-choice').innerText = choice; $('#pvp-controls').classList.add('opacity-50', 'pointer-events-none');
-                    $('#pvp-status').innerText = "Waiting for Opponent...";
-                    setTimeout(() => { const botPick = Math.random() > 0.5 ? 'TAI' : 'XIU'; $('#p2-choice').innerText = "READY"; setTimeout(() => this.resolveRound(botPick), 1000); }, 1000);
-                },
-                async resolveRound(botPick) {
-                    $('#pvp-status').innerText = "Rolling..."; $('#pvp-dice').classList.add('shaking'); app.audio.playRoll();
-                    await sleep(1500); $('#pvp-dice').classList.remove('shaking');
-                    const d1 = Math.ceil(Math.random()*6); const d2 = Math.ceil(Math.random()*6); const d3 = Math.ceil(Math.random()*6);
-                    const total = d1+d2+d3; const result = (total >= 11 && total <= 17) ? 'TAI' : (total >= 4 && total <= 10) ? 'XIU' : 'BAO';
-                    $('#pvp-dice').innerHTML = `<div class="w-8 h-8 bg-white rounded flex items-center justify-center text-black font-bold">${d1}</div><div class="w-8 h-8 bg-white rounded flex items-center justify-center text-black font-bold">${d2}</div><div class="w-8 h-8 bg-white rounded flex items-center justify-center text-black font-bold">${d3}</div>`;
-                    $('#p2-choice').innerText = botPick; 
-                    let p1Win = (this.playerChoice === result); let botWin = (botPick === result); let bet = this.activeRoom.bet;
-                    let msg = ""; let change = 0;
-                    if(result === 'BAO') { msg = "BÃO! Nhà cái ăn hết!"; change = -bet; } 
-                    else {
-                        if (p1Win && !botWin) { msg = "Bạn Thắng!"; change = bet; } else if (!p1Win && botWin) { msg = "Bạn Thua!"; change = -bet; } 
-                        else if (p1Win && botWin) { msg = "Hòa (Cả 2 thắng)"; change = 0; } else { msg = "Hòa (Cả 2 thua)"; change = -bet; }
-                    }
-                    $('#pvp-status').innerText = `${total} • ${result}`;
-                    if(change > 0) { $('#pvp-status').className = "text-green-400 font-serif text-xl italic mb-1 bubble-pop"; app.recordTx(change, 'PvP TaiXiu'); this.addChat('System', `Bạn đã thắng $ ${change}!`); this.addChat(this.botName, "Hay đó!"); } 
-                    else if (change < 0) { $('#pvp-status').className = "text-red-400 font-serif text-xl italic mb-1 bubble-pop"; app.recordTx(change, 'PvP TaiXiu'); this.addChat(this.botName, "Non quá :))"); } 
-                    else { $('#pvp-status').className = "text-white font-serif text-xl italic mb-1"; }
-                    setTimeout(() => {
-                        this.startTaiXiuRound();
-                        $('#pvp-dice').innerHTML = `<div class="w-8 h-8 bg-white rounded flex items-center justify-center text-black font-bold">?</div><div class="w-8 h-8 bg-white rounded flex items-center justify-center text-black font-bold">?</div><div class="w-8 h-8 bg-white rounded flex items-center justify-center text-black font-bold">?</div>`;
-                        $('#pvp-status').className = "text-gold font-serif text-xl italic mb-1";
-                    }, 3000);
-                }
-            },
-
             createParticles() {
                 const container = $('#particles');
                 for(let i=0; i<20; i++) {
