@@ -1259,7 +1259,7 @@
                     const resDiv = $('#tx-result');
                     
                     if(won) {
-                        const payout = amount * 2;
+                        const payout = amount + amount * 1;
                         app.processGameEnd(payout, amount, 'Tai Xiu');
                         msgEl.innerText = "CHIẾN THẮNG!";
                         msgEl.className = "font-serif text-3xl italic text-[#e0c080] font-bold drop-shadow-md";
@@ -1429,7 +1429,8 @@
                     if(res === 'WIN') {
                         const pScore = this.calcScore(this.playerHand);
                         const isBJ = pScore === 21 && this.playerHand.length === 2;
-                        const payout = isBJ ? this.betAmount * 2.5 : this.betAmount * 2;
+                        const profitMultiplier = isBJ ? 1.5 : 1;
+                        const payout = this.betAmount + Math.floor(this.betAmount * profitMultiplier);
                         
                         app.processGameEnd(payout, this.betAmount, 'Blackjack');
                         msgEl.innerText = isBJ ? "BLACKJACK!" : "YOU WIN!";
@@ -1533,16 +1534,28 @@
                     const area = $('#slot-msg-area');
                     
                     if(allSame) {
-                        const winAmt = amount * result[0].val * 5; 
-                        app.processGameEnd(winAmt, amount, 'Slots');
+                        const id = result[0].id;
+                        let profitMultiplier = 10;
+                        if(id === '7') profitMultiplier = 50;
+                        else if(id === 'dia') profitMultiplier = 30;
+                        else if(id === 'crown') profitMultiplier = 20;
+
+                        const payout = amount + amount * profitMultiplier;
+                        const winAmt = payout; 
+
+                        app.processGameEnd(payout, amount, 'Slots');
                         msgEl.innerText = "JACKPOT!";
                         msgEl.className = "font-serif text-3xl italic text-[#e0c080] font-bold drop-shadow-md";
                         subEl.innerText = `Win $ ${winAmt.toLocaleString()}`;
                         $('.win-line').style.display = 'block';
                         app.triggerWinFx(winAmt - amount);
                     } else if (pair) {
-                         const winAmt = Math.floor(amount * 1.5);
-                         app.processGameEnd(winAmt, amount, 'Slots');
+                         const profitMultiplier = 1.5;
+                         const profit = Math.floor(amount * profitMultiplier);
+                         const payout = amount + profit;
+                         const winAmt = payout;
+
+                         app.processGameEnd(payout, amount, 'Slots');
                          msgEl.innerText = "NICE HIT!";
                          msgEl.className = "font-serif text-3xl italic text-[#e0c080] font-bold";
                          subEl.innerText = `Win $ ${winAmt.toLocaleString()}`;
@@ -1652,7 +1665,10 @@
                     const msgEl = $('#treasure-msg');
                     
                     if (hole.type === 'WIN_36') {
-                        const payout = this.betAmount * 36;
+                        const profitMultiplier = 36;
+                        const profit = this.betAmount * profitMultiplier;
+                        const payout = this.betAmount + profit;
+
                         app.processGameEnd(payout, this.betAmount, 'Treasure Hunt');
                         
                         msgEl.innerText = "JACKPOT x36!";
