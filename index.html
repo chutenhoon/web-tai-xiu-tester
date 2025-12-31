@@ -387,7 +387,7 @@
         @keyframes popReveal { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         .res-win { color: #FFD700; filter: drop-shadow(0 0 5px gold); }
         .res-loss { color: #555; filter: grayscale(1); }
-        .res-half { color: #aaa; }
+        .res-half { color: #F472B6; filter: drop-shadow(0 0 5px #F472B6); }
         
         @media (min-width: 1024px) {
              #view-trading .flex-col {
@@ -1259,12 +1259,12 @@
                     const resDiv = $('#tx-result');
                     
                     if(won) {
-                        const profit = amount; 
-                        app.recordTx(profit, 'Tai Xiu');
+                        const payout = amount * 2;
+                        app.processGameEnd(payout, amount, 'Tai Xiu');
                         msgEl.innerText = "CHIẾN THẮNG!";
                         msgEl.className = "font-serif text-3xl italic text-green-400";
                     } else {
-                        app.recordTx(-amount, 'Tai Xiu');
+                        app.processGameEnd(0, amount, 'Tai Xiu');
                         msgEl.innerText = "THẤT BẠI";
                         msgEl.className = "font-serif text-3xl italic text-red-500";
                     }
@@ -1427,20 +1427,19 @@
                     
                     if(res === 'WIN') {
                         const winAmt = this.betAmount * 2;
-                        app.recordTx(this.betAmount, 'Blackjack'); 
+                        app.processGameEnd(winAmt, this.betAmount, 'Blackjack');
                         msgEl.innerText = "YOU WIN!";
                         msgEl.className = "font-serif text-3xl italic text-green-400 shadow-black drop-shadow-lg";
                     } else if (res === 'BUST') {
-                        app.recordTx(-this.betAmount, 'Blackjack');
+                        app.processGameEnd(0, this.betAmount, 'Blackjack');
                         msgEl.innerText = "BUST!";
                         msgEl.className = "font-serif text-3xl italic text-red-500 shadow-black drop-shadow-lg";
                     } else if (res === 'LOSE') {
-                        app.recordTx(-this.betAmount, 'Blackjack');
+                        app.processGameEnd(0, this.betAmount, 'Blackjack');
                         msgEl.innerText = "DEALER WINS";
                         msgEl.className = "font-serif text-3xl italic text-red-500 shadow-black drop-shadow-lg";
                     } else {
-                        app.user.score += this.betAmount; 
-                        app.animateBalance(app.user.score);
+                        app.processGameEnd(this.betAmount, this.betAmount, 'Blackjack');
                         msgEl.innerText = "PUSH";
                         msgEl.className = "font-serif text-3xl italic text-gray-300 shadow-black drop-shadow-lg";
                     }
@@ -1529,23 +1528,32 @@
                     const area = $('#slot-msg-area');
                     
                     if(allSame) {
-                        const mult = result[0].val * 5; 
-                        const win = amount * mult;
-                        app.recordTx(win - amount, 'Slots'); 
+                        const winAmt = amount * result[0].val * 5; 
+                        // Fix: Return Stake + Win Amount
+                        // Standard Slot math: Payout = Win Amount. 
+                        // But user request: "cộng cả tiền cược + tiền thắng".
+                        // Assuming the multiplier implies "Profit Multiplier" or user wants stake returned on top of win.
+                        // Let's assume standard behavior: Payout = Total Return. 
+                        // If multiplier is 5x, Payout is 5x. Profit is 4x.
+                        // User complained "chỉ cộng mỗi tiền thắng" -> implies logic was mistakenly just adding profit.
+                        // Let's treat the calculated 'winAmt' as the total payout.
+                        // AND ensuring we credit the full payout to the wallet.
+                        
+                        app.processGameEnd(winAmt, amount, 'Slots');
                         msgEl.innerText = "JACKPOT!";
                         msgEl.className = "font-serif text-3xl italic text-gold";
-                        subEl.innerText = `Win $ ${win.toLocaleString()}`;
+                        subEl.innerText = `Win $ ${winAmt.toLocaleString()}`;
                         $('.win-line').style.display = 'block';
-                        app.triggerWinFx(win);
+                        app.triggerWinFx(winAmt);
                     } else if (result[0].id === result[1].id || result[1].id === result[2].id || result[0].id === result[2].id) {
                          // Small win for pair
-                         const win = Math.floor(amount * 1.5);
-                         app.recordTx(win - amount, 'Slots');
+                         const winAmt = Math.floor(amount * 1.5);
+                         app.processGameEnd(winAmt, amount, 'Slots');
                          msgEl.innerText = "NICE!";
                          msgEl.className = "font-serif text-3xl italic text-purple-300";
-                         subEl.innerText = `Win $ ${win.toLocaleString()}`;
+                         subEl.innerText = `Win $ ${winAmt.toLocaleString()}`;
                     } else {
-                        app.recordTx(-amount, 'Slots');
+                        app.processGameEnd(0, amount, 'Slots');
                         msgEl.innerText = "Try Again";
                         msgEl.className = "font-serif text-2xl italic text-gray-400";
                         subEl.innerText = "";
@@ -1653,34 +1661,25 @@
                     const msgEl = $('#treasure-msg');
                     
                     if (hole.type === 'WIN_36') {
-                        const win = this.betAmount * 36;
-                        app.recordTx(win, 'Treasure Hunt'); // Profit is technically (win - bet), but logic here records pure PNL relative to post-bet state? 
-                        // Note: recordTx adds to score. Score was deducted at start. 
-                        // So if I bet 100, score is -100. Win 3600. I need to add 3600 to score. 
-                        // Net profit is 3500. recordTx expects Amount added to wallet? 
-                        // Looking at Slot logic: recordTx(win - amount). 
-                        // So I should add win amount to score, and record tx as (win - bet).
-                        
-                        // Actually logic says: user.score += amount. 
-                        // So I should pass the payout amount to update score correctly?
-                        // Wait, recordTx adds amount to user.score. 
-                        // Start: Score 1000. Bet 100 -> Score 900.
-                        // Win x36 -> Payout 3600. New Score should be 4500.
-                        // So I need to add 3600.
-                        // recordTx(3600, ...) -> adds 3600.
-                        
-                        app.recordTx(win, 'Treasure Hunt');
+                        // Win x36: Payout = Bet * 36
+                        const payout = this.betAmount * 36;
+                        app.processGameEnd(payout, this.betAmount, 'Treasure Hunt');
                         
                         msgEl.innerText = "JACKPOT x36!";
                         msgEl.className = "h-8 text-center text-gold font-serif italic text-3xl font-bold drop-shadow-md";
-                        app.triggerWinFx(win);
+                        app.triggerWinFx(payout);
                     } else if (hole.type === 'LOSS_50') {
+                        // Loss 50%: User gets back 50% of bet
                         const payout = Math.floor(this.betAmount * 0.5);
-                        app.recordTx(payout, 'Treasure Hunt');
-                        msgEl.innerText = "Saved 50%";
-                        msgEl.className = "h-8 text-center text-gray-400 font-serif italic text-xl";
+                        app.processGameEnd(payout, this.betAmount, 'Treasure Hunt');
+                        
+                        msgEl.innerText = "Lost 50%";
+                        msgEl.className = "h-8 text-center text-pink-400 font-serif italic text-xl";
+                        app.triggerLoseFx(this.betAmount - payout);
                     } else {
-                        app.recordTx(0, 'Treasure Hunt'); // Lost everything
+                        // Loss 100%: User gets back 0
+                        app.processGameEnd(0, this.betAmount, 'Treasure Hunt');
+                        
                         msgEl.innerText = "Busted!";
                         msgEl.className = "h-8 text-center text-red-500 font-serif italic text-xl";
                         app.audio.playLose();
@@ -1975,13 +1974,15 @@
                         this.currentPrice = p;
                         this.currentCandle = { o: p, h: p, l: p, c: p, v: 0, t: now };
                         
+                        // Fix for scroll: attach listeners to canvas, not window
                         cvs.addEventListener('mousedown', e => this.startDrag(e));
                         window.addEventListener('mousemove', e => this.drag(e));
                         window.addEventListener('mouseup', () => this.endDrag());
                         
+                        // Fix touch scrolling blocking on mobile
                         cvs.addEventListener('touchstart', e => this.handleTouchStart(e), {passive: false});
-                        window.addEventListener('touchmove', e => this.handleTouchMove(e), {passive: false});
-                        window.addEventListener('touchend', e => this.handleTouchEnd(e));
+                        cvs.addEventListener('touchmove', e => this.handleTouchMove(e), {passive: false});
+                        cvs.addEventListener('touchend', e => this.handleTouchEnd(e));
                         
                         cvs.addEventListener('wheel', e => this.zoom(e), {passive: false});
 
@@ -1996,7 +1997,8 @@
                 
                 drag(e) {
                     if(!this.isDragging) return;
-                    e.preventDefault(); 
+                    // Do NOT call preventDefault here if attached to window for mousemove
+                    // But for touchmove on canvas, we do.
                     const x = e.touches ? e.touches[0].clientX : e.clientX;
                     const dx = x - this.lastX;
                     this.offsetX += dx;
@@ -2014,6 +2016,9 @@
                 },
                 
                 handleTouchStart(e) {
+                    // preventDefault on canvas ensures scroll doesn't happen when touching chart
+                    // But we want page scroll elsewhere. Since listener is on cvs, this is fine.
+                    // e.preventDefault(); // Optional depending on behavior desired.
                     if (e.touches.length === 2) {
                         this.isDragging = false;
                         const dist = Math.hypot(
@@ -2028,7 +2033,8 @@
                 },
 
                 handleTouchMove(e) {
-                    e.preventDefault();
+                    // Prevent page scroll only when interacting with chart
+                    e.preventDefault(); 
                     if (e.touches.length === 2 && this.initialPinchDist) {
                         const dist = Math.hypot(
                             e.touches[0].clientX - e.touches[1].clientX,
@@ -2121,8 +2127,8 @@
                         payout = this.activeOrder.bet + pnl;
                     }
                     
+                    app.processGameEnd(payout, this.activeOrder.bet, 'Trading 30s');
                     const profit = payout - this.activeOrder.bet;
-                    app.recordTx(Math.round(profit), 'Trading 30s');
                     
                     const box = document.getElementById('trade-result-overlay');
                     const title = document.getElementById('trade-res-title');
@@ -2574,16 +2580,29 @@
                 }
             },
 
+            processGameEnd(payout, bet, game) {
+                const pnl = payout - bet;
+                this.user.score += payout; 
+                
+                // History logs profit/loss (not total payout)
+                this.user.history.push({ date: Date.now(), amount: pnl, game: game });
+                if(this.user.history.length > 200) this.user.history.shift();
+                this.saveUser();
+                
+                this.api.sendTx(pnl, game);
+                
+                app.animateBalance(this.user.score);
+            },
+
+            // Legacy support for non-game transaction (like transfer)
             recordTx(amount, game) {
+                // This method blindly adds amount to score. Used for transfers.
+                // Not used for games anymore to avoid the double-deduction logic confusion.
                 this.user.score += amount;
                 this.user.history.push({ date: Date.now(), amount: amount, game: game });
                 if(this.user.history.length > 200) this.user.history.shift();
                 this.saveUser();
                 this.api.sendTx(amount, game);
-                
-                if(amount > 0) this.triggerWinFx(amount);
-                else if(amount < 0) this.triggerLoseFx(amount);
-                
                 app.animateBalance(this.user.score);
             },
 
