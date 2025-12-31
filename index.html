@@ -193,11 +193,11 @@
             pointer-events: none; z-index: 10;
         }
         .reel-strip {
-            display: flex; flex-direction: column; align-items: center;
-            transition: transform 0.1s linear; will-change: transform;
+            display: flex; flex-direction: column-reverse; align-items: center;
+            transform: translateY(0); will-change: transform;
         }
         .reel-symbol {
-            height: 120px; display: flex; align-items: center; justify-content: center;
+            height: 120px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
             font-size: 3.5rem; width: 100%; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
         }
         .symbol-7 { font-family: var(--font-serif); color: #6D597A; font-weight: 700; }
@@ -1378,6 +1378,14 @@
                     $('#btn-spin').disabled = false;
                     $('#btn-spin').style.opacity = '1';
                 },
+
+                generateStripHtml(resultSymbol) {
+                    let html = resultSymbol.html; 
+                    for(let i=0; i<30; i++) {
+                        html += this.symbols[Math.floor(Math.random() * this.symbols.length)].html;
+                    }
+                    return html;
+                },
                 
                 async spin() {
                     const amount = parseInt($('#slot-bet-input').value);
@@ -1394,53 +1402,36 @@
                     app.audio.playSlotSpin();
                     
                     const reels = [$('#reel-1'), $('#reel-2'), $('#reel-3')];
-                    const result = [];
-                    
-                    // Start spin animation
-                    reels.forEach(r => {
-                        r.style.transition = 'none';
-                        r.style.transform = 'translateY(0)';
-                        // Fill reel with random symbols for blur effect
-                        r.innerHTML = Array(20).fill(0).map(() => 
-                            this.symbols[Math.floor(Math.random()*this.symbols.length)].html
-                        ).join('');
-                        
-                        // Force reflow
-                        void r.offsetWidth;
-                        
-                        r.style.transition = 'transform 2s cubic-bezier(0.2, 0.8, 0.2, 1)';
-                        r.style.transform = 'translateY(-1500px)';
-                    });
-                    
-                    // Determine result
+                    const results = [];
+
                     for(let i=0; i<3; i++) {
-                        await sleep(500 + i*300);
-                        const sym = this.symbols[Math.floor(Math.random()*this.symbols.length)];
-                        result.push(sym);
-                        
-                        const r = reels[i];
-                        r.style.transition = 'none';
-                        r.style.transform = 'translateY(-120px)'; 
-                        r.innerHTML = 
-                            this.symbols[Math.floor(Math.random()*this.symbols.length)].html + 
-                            sym.html + 
-                            this.symbols[Math.floor(Math.random()*this.symbols.length)].html;
-                        
-                        void r.offsetWidth;
-                        r.style.transition = 'transform 0.3s ease-out';
-                        r.style.transform = 'translateY(-120px)'; 
-                        
-                        app.audio.playSlotStop();
+                        results.push(this.symbols[Math.floor(Math.random() * this.symbols.length)]);
                     }
                     
-                    // Check win
-                    const allSame = result[0].id === result[1].id && result[1].id === result[2].id;
+                    reels.forEach((r, i) => {
+                        const stripHtml = this.generateStripHtml(results[i]);
+                        r.innerHTML = stripHtml;
+                        r.style.transition = 'none';
+                        r.style.transform = `translateY(${-120 * 30}px)`; 
+                        
+                        void r.offsetWidth;
+
+                        setTimeout(() => {
+                            r.style.transition = `transform ${2 + i * 0.3}s cubic-bezier(.15,.9,.25,1)`; 
+                            r.style.transform = 'translateY(0)';
+                        }, 50);
+                    });
+
+                    await sleep(2000 + 3 * 300); 
+                    app.audio.playSlotStop();
+
+                    const allSame = results[0].id === results[1].id && results[1].id === results[2].id;
                     const msgEl = $('#slot-msg');
                     const subEl = $('#slot-sub');
                     const area = $('#slot-msg-area');
                     
                     if(allSame) {
-                        const mult = result[0].val * 5; 
+                        const mult = results[0].val * 5; 
                         const win = amount * mult;
                         app.recordTx(win - amount, 'Slots'); 
                         msgEl.innerText = "JACKPOT!";
@@ -1448,8 +1439,7 @@
                         subEl.innerText = `Win $ ${win.toLocaleString()}`;
                         $('.win-line').style.display = 'block';
                         app.triggerWinFx(win);
-                    } else if (result[0].id === result[1].id || result[1].id === result[2].id || result[0].id === result[2].id) {
-                         // Small win for pair
+                    } else if (results[0].id === results[1].id || results[1].id === results[2].id || results[0].id === results[2].id) {
                          const win = Math.floor(amount * 1.5);
                          app.recordTx(win - amount, 'Slots');
                          msgEl.innerText = "NICE!";
@@ -1713,7 +1703,8 @@
                 
                 volatility: 0.8,
                 momentum: 0,
-                jumpProb: 0.02,
+                trendStrength: 0,
+                reversalChance: 0.01,
                 panicCounter: 0,
                 
                 scaleX: 1.0,
@@ -1963,44 +1954,53 @@
                 },
                 
                 updatePrice() {
+                    if (Math.random() < 0.05) {
+                        this.trendStrength += (Math.random() - 0.5) * 0.1;
+                    }
+                    this.momentum = this.momentum * 0.95 + this.trendStrength + (Math.random() - 0.5) * this.volatility;
                     
-                    if(this.panicCounter > 0) {
-                        this.volatility = 3.0 + Math.random() * 5.0;
+                    if (this.panicCounter > 0) {
+                        this.volatility = 4.0 + Math.random() * 4.0;
+                        this.momentum += (Math.random() - 0.5) * 5.0; 
                         this.panicCounter--;
                     } else {
-                        if(Math.random() < 0.005) {
-                            this.panicCounter = 30 + Math.floor(Math.random() * 30);
-                            this.momentum = (Math.random() - 0.5) * 8.0;
-                        } else {
-                            this.volatility = 0.5 + Math.random() * 0.5;
+                        this.volatility = 0.5 + Math.abs(Math.sin(Date.now() / 2000)) * 1.5;
+                        if (Math.random() < 0.002) {
+                             this.panicCounter = 20 + Math.floor(Math.random() * 20); 
                         }
                     }
+
+                    let noise = (Math.random() - 0.5) * this.volatility;
                     
-                    this.momentum = this.momentum * 0.92 + (Math.random() - 0.5) * 0.2;
-                    
-                    let jump = 0;
-                    if(Math.random() < 0.01) {
-                        jump = (Math.random() - 0.5) * 40 * this.volatility;
-                    }
-                    
-                    let dramaMult = 1;
-                    if(this.isTrading && this.activeOrder) {
+                    if (this.activeOrder) {
                         const nowMs = Date.now();
                         const timeLeft = (this.activeOrder.endTime - nowMs) / 1000;
-                        if(timeLeft < 5 && timeLeft > 0) {
-                            dramaMult = 3.0;
-                            if(Math.random() < 0.1) jump += (Math.random() - 0.5) * 50;
+                        
+                        if (timeLeft < 10) {
+                            this.volatility *= 1.5; 
+                            noise *= 2; 
+                        }
+
+                        if (timeLeft < 8 && timeLeft > 0.5) {
+                            const priceDiff = this.currentPrice - this.activeOrder.entry;
+                            const directionMult = this.activeOrder.dir === 'up' ? 1 : -1;
+                            const currentPnL = (priceDiff / this.activeOrder.entry) * this.activeOrder.lev * directionMult * this.activeOrder.bet;
+                            
+                            if (currentPnL > 0) {
+                                const adverseMove = (this.activeOrder.dir === 'up' ? -1 : 1) * (this.volatility * 0.8);
+                                if (Math.random() < 0.4) {
+                                    this.momentum += adverseMove;
+                                }
+                            }
                         }
                     }
-                    
-                    const noise = (Math.random() - 0.5) * this.volatility * dramaMult;
-                    const step = this.momentum + noise + jump;
-                    this.currentPrice += step;
+
+                    this.currentPrice += this.momentum + noise;
                     
                     this.currentCandle.c = this.currentPrice;
                     this.currentCandle.h = Math.max(this.currentCandle.h, this.currentPrice);
                     this.currentCandle.l = Math.min(this.currentCandle.l, this.currentPrice);
-                    this.currentCandle.v += Math.abs(step) * 10; 
+                    this.currentCandle.v += Math.abs(this.momentum + noise) * 10; 
                     
                     const now = Math.floor(Date.now() / 1000);
                     if (now > this.currentCandle.t) {
@@ -2162,7 +2162,7 @@
                         ctx.stroke();
                         ctx.setLineDash([]);
                         ctx.fillStyle = '#fff';
-                        ctx.fillText('ENTRY', 5, yEntry - 5);
+                        ctx.fillText('ENTRY', 15, yEntry - 8);
                     }
                     
                     const yCurr = getY(this.currentPrice);
