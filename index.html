@@ -2747,12 +2747,13 @@
                 });
                 
                 const mainApp = document.getElementById('app');
+                mainApp.classList.remove('max-w-md', 'md:max-w-6xl', 'full-screen-mode');
+                
                 if(id === 'view-trading') {
-                     mainApp.classList.remove('max-w-md');
                      mainApp.classList.add('full-screen-mode'); 
                 } else {
                      mainApp.classList.add('max-w-md');
-                     mainApp.classList.remove('full-screen-mode');
+                     mainApp.classList.add('md:max-w-6xl');
                 }
                 
                 setTimeout(() => {
