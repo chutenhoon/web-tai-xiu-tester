@@ -201,6 +201,8 @@
         .reel-symbol {
             height: 140px; display: flex; align-items: center; justify-content: center;
             font-size: 4.5rem; width: 100%; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            line-height: 1; /* Center emojis vertically */
+            padding-top: 5px; /* Slight offset for emoji baseline */
         }
         .symbol-7 { font-family: var(--font-serif); color: #6D597A; font-weight: 700; }
         .symbol-bell { filter: sepia(0.6); }
@@ -681,8 +683,11 @@
                 <p class="text-[10px] text-gray-500 uppercase tracking-widest">Balance</p>
                 <p class="text-gold font-serif text-xl user-balance-display">$ 0</p>
             </div>
-            <div class="absolute top-4 left-4 z-30 flex gap-3">
-                <button onclick="app.switchView('view-hall')" class="text-gold font-serif italic hover:opacity-70 text-lg">← Exit</button>
+            <div class="absolute top-4 left-4 z-30 flex items-center gap-4">
+                <button onclick="app.switchView('view-hall')" class="group flex items-center gap-2 text-gold font-serif italic hover:opacity-70 text-lg transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:-translate-x-1"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    <span>Exit</span>
+                </button>
             </div>
 
             <div class="flex flex-col h-full pt-16 pb-4 px-4 w-full max-w-full">
@@ -763,8 +768,11 @@
                 <p class="text-[10px] text-gray-500 uppercase tracking-widest">Balance</p>
                 <p class="text-gold font-serif text-xl user-balance-display">$ 0</p>
             </div>
-            <div class="absolute top-6 left-6 z-30 flex gap-3">
-                <button onclick="app.switchView('view-hall')" class="text-gold font-serif italic hover:opacity-70 text-lg">← Exit</button>
+            <div class="absolute top-6 left-6 z-30 flex items-center gap-4">
+                <button onclick="app.switchView('view-hall')" class="group flex items-center gap-2 text-gold font-serif italic hover:opacity-70 text-lg transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:-translate-x-1"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    <span>Exit</span>
+                </button>
                 <div class="sound-toggle-btn sound-icon-game" onclick="app.audio.toggle()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
                 </div>
@@ -806,8 +814,11 @@
                 <p class="text-[10px] text-amber-200/50 uppercase tracking-widest">Balance</p>
                 <p class="text-gold font-serif text-xl user-balance-display">$ 0</p>
             </div>
-            <div class="absolute top-6 left-6 z-30 flex gap-3">
-                <button onclick="app.switchView('view-hall')" class="text-gold font-serif italic hover:opacity-70 text-lg">← Exit</button>
+            <div class="absolute top-6 left-6 z-30 flex items-center gap-4">
+                <button onclick="app.switchView('view-hall')" class="group flex items-center gap-2 text-gold font-serif italic hover:opacity-70 text-lg transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:-translate-x-1"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    <span>Exit</span>
+                </button>
                 <div class="sound-toggle-btn sound-icon-game" onclick="app.audio.toggle()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
                 </div>
@@ -853,8 +864,11 @@
                 <p class="text-[10px] text-gray-500 uppercase tracking-widest">Balance</p>
                 <p class="text-gold font-serif text-xl user-balance-display">$ 0</p>
             </div>
-            <div class="absolute top-6 left-6 z-30 flex gap-3">
-                <button onclick="app.switchView('view-hall')" class="text-gold font-serif italic hover:opacity-70 text-lg">← Retour</button>
+            <div class="absolute top-6 left-6 z-30 flex items-center gap-4">
+                <button onclick="app.switchView('view-hall')" class="group flex items-center gap-2 text-gold font-serif italic hover:opacity-70 text-lg transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:-translate-x-1"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    <span>Retour</span>
+                </button>
                 <div class="sound-toggle-btn sound-icon-game" onclick="app.audio.toggle()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
                 </div>
@@ -905,8 +919,11 @@
                 <p class="text-[10px] text-gray-500 uppercase tracking-widest">Balance</p>
                 <p class="text-gold font-serif text-xl user-balance-display">$ 0</p>
             </div>
-            <div class="absolute top-6 left-6 z-30 flex gap-3">
-                <button onclick="app.switchView('view-hall')" class="text-gold font-serif italic hover:opacity-70 text-lg">← Quitter</button>
+            <div class="absolute top-6 left-6 z-30 flex items-center gap-4">
+                <button onclick="app.switchView('view-hall')" class="group flex items-center gap-2 text-gold font-serif italic hover:opacity-70 text-lg transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:-translate-x-1"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    <span>Quitter</span>
+                </button>
                 <div class="sound-toggle-btn sound-icon-game" onclick="app.audio.toggle()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
                 </div>
@@ -958,8 +975,11 @@
                 <p class="text-[10px] text-purple-200/50 uppercase tracking-widest">Balance</p>
                 <p class="text-gold font-serif text-xl user-balance-display">$ 0</p>
             </div>
-            <div class="absolute top-6 left-6 z-30 flex gap-3">
-                <button onclick="app.switchView('view-hall')" class="text-gold font-serif italic hover:opacity-70 text-lg">← Quitter</button>
+            <div class="absolute top-6 left-6 z-30 flex items-center gap-4">
+                <button onclick="app.switchView('view-hall')" class="group flex items-center gap-2 text-gold font-serif italic hover:opacity-70 text-lg transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:-translate-x-1"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    <span>Quitter</span>
+                </button>
                 <div class="sound-toggle-btn sound-icon-game" onclick="app.audio.toggle()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
                 </div>
