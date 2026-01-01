@@ -113,6 +113,7 @@
             border: 1px solid rgba(255,255,255,0.05);
             transition: all 0.5s var(--ease-lux);
             position: relative; overflow: hidden;
+            height: 180px;
         }
         .game-card:hover {
             border-color: var(--color-gold);
@@ -133,11 +134,11 @@
         .shaking { animation: shake 0.4s infinite; }
         
         .die {
-            width: 50px; height: 50px; background: #F8F5EF; border-radius: 8px;
-            box-shadow: inset 0 0 5px rgba(0,0,0,0.2), 0 5px 10px rgba(0,0,0,0.3);
-            display: grid; grid-template-columns: repeat(3, 1fr); padding: 6px; gap: 2px;
+            width: 60px; height: 60px; background: #F8F5EF; border-radius: 12px;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.2), 0 5px 15px rgba(0,0,0,0.3);
+            display: grid; grid-template-columns: repeat(3, 1fr); padding: 8px; gap: 4px;
         }
-        .dot { background: #1a1a1a; border-radius: 50%; width: 8px; height: 8px; align-self: center; justify-self: center; visibility: hidden; }
+        .dot { background: #1a1a1a; border-radius: 50%; width: 10px; height: 10px; align-self: center; justify-self: center; visibility: hidden; }
         .die[data-val="1"] .d5, .die[data-val="2"] .d1, .die[data-val="2"] .d9, .die[data-val="3"] .d1, .die[data-val="3"] .d5, .die[data-val="3"] .d9,
         .die[data-val="4"] .d1, .die[data-val="4"] .d3, .die[data-val="4"] .d7, .die[data-val="4"] .d9,
         .die[data-val="5"] .d1, .die[data-val="5"] .d3, .die[data-val="5"] .d5, .die[data-val="5"] .d7, .die[data-val="5"] .d9,
@@ -145,9 +146,9 @@
         .die[data-val="1"] .d5 { background: #800020; transform: scale(1.4); }
 
         .card-bj {
-            width: 64px; height: 90px; 
-            background: #F4F1EA; border: 1px solid #999; border-radius: 6px;
-            display: flex; flex-direction: column; justify-content: space-between; padding: 5px;
+            width: 80px; height: 112px; 
+            background: #F4F1EA; border: 1px solid #999; border-radius: 8px;
+            display: flex; flex-direction: column; justify-content: space-between; padding: 6px;
             font-family: var(--font-serif); position: relative;
             box-shadow: -2px 4px 12px rgba(0,0,0,0.4); transition: transform 0.3s; font-weight: 700;
         }
@@ -160,9 +161,9 @@
         }
         .card-value-lg { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-            font-size: 2rem; opacity: 0.15; 
+            font-size: 2.5rem; opacity: 0.15; 
         }
-        .card-top-val { font-size: 0.9rem; line-height: 1; }
+        .card-top-val { font-size: 1.1rem; line-height: 1; }
         .deal-anim { animation: dealCard 0.4s ease-out forwards; opacity: 0; transform: translateY(-50px); }
         @keyframes dealCard { to { opacity: 1; transform: translateY(0); } }
 
@@ -178,14 +179,14 @@
             background: linear-gradient(45deg, transparent, rgba(209, 178, 124, 0.3), transparent); filter: blur(5px);
         }
         .reel-container {
-            display: flex; gap: 10px; justify-content: center;
-            background: #111; padding: 10px; border-radius: 6px;
+            display: flex; gap: 15px; justify-content: center;
+            background: #111; padding: 15px; border-radius: 8px;
             box-shadow: inset 0 0 10px rgba(0,0,0,0.9); border: 1px solid #333;
         }
         .reel-window {
-            width: 70px; height: 120px;
+            width: 90px; height: 140px;
             background: linear-gradient(to right, #e0e0e0 0%, #F8F5EF 50%, #d6d6d6 100%);
-            border-radius: 4px; overflow: hidden; position: relative;
+            border-radius: 6px; overflow: hidden; position: relative;
             box-shadow: inset 0 0 15px rgba(0,0,0,0.4); border: 1px solid #000;
         }
         .reel-window::after {
@@ -198,8 +199,8 @@
             transition: transform 0.1s linear; will-change: transform;
         }
         .reel-symbol {
-            height: 120px; display: flex; align-items: center; justify-content: center;
-            font-size: 3.5rem; width: 100%; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            height: 140px; display: flex; align-items: center; justify-content: center;
+            font-size: 4.5rem; width: 100%; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
         }
         .symbol-7 { font-family: var(--font-serif); color: #6D597A; font-weight: 700; }
         .symbol-bell { filter: sepia(0.6); }
@@ -207,8 +208,8 @@
         .symbol-diamond { filter: drop-shadow(0 0 5px cyan); }
         .symbol-crown { filter: drop-shadow(0 0 5px gold); }
         .win-line {
-            position: absolute; top: 50%; left: 5%; right: 5%; height: 2px;
-            background: rgba(209, 178, 124, 0.5); z-index: 20; box-shadow: 0 0 5px var(--color-gold);
+            position: absolute; top: 50%; left: 5%; right: 5%; height: 3px;
+            background: rgba(209, 178, 124, 0.5); z-index: 20; box-shadow: 0 0 8px var(--color-gold);
             display: none;
         }
 
@@ -507,82 +508,82 @@
                     </div>
                 </div>
 
-                <div class="flex-1 overflow-y-auto no-scrollbar relative w-full max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-20">
-                    <div onclick="app.gotoGame('slots')" class="game-card p-6 rounded-lg cursor-pointer group flex flex-col justify-between h-40" style="border-color: rgba(109,89,122,0.3);">
-                        <div>
-                            <div class="flex justify-between items-start">
-                                <h3 class="font-serif text-2xl text-ivory italic group-hover:text-purple-400 transition-colors">L'Amour Slots</h3>
-                                <span class="text-[10px] border border-purple-800 text-purple-300 px-2 py-0.5 rounded uppercase">New</span>
+                <div class="flex-1 overflow-y-auto no-scrollbar relative w-full max-w-7xl mx-auto flex flex-col gap-8 pb-20">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div onclick="app.gotoGame('slots')" class="game-card p-6 rounded-lg cursor-pointer group flex flex-col justify-between" style="border-color: rgba(109,89,122,0.3);">
+                            <div>
+                                <div class="flex justify-between items-start">
+                                    <h3 class="font-serif text-3xl text-ivory italic group-hover:text-purple-400 transition-colors">L'Amour Slots</h3>
+                                    <span class="text-[10px] border border-purple-800 text-purple-300 px-2 py-0.5 rounded uppercase">New</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2 font-sans">Cổ điển • Sang trọng</p>
                             </div>
-                            <p class="text-xs text-gray-500 mt-2 font-sans">Cổ điển • Sang trọng</p>
+                            <div class="flex justify-end"><span class="text-purple-400 text-sm uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Tourner →</span></div>
                         </div>
-                        <div class="flex justify-end"><span class="text-purple-400 text-sm uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Tourner →</span></div>
+
+                        <div onclick="app.gotoGame('taixiu')" class="game-card p-6 rounded-lg cursor-pointer group flex flex-col justify-between">
+                            <div>
+                                <div class="flex justify-between items-start">
+                                    <h3 class="font-serif text-3xl text-ivory italic group-hover:text-gold transition-colors">Tài Xỉu Solo</h3>
+                                    <span class="text-[10px] border border-gold text-gold px-2 py-0.5 rounded uppercase">Popular</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2 font-sans">Sảnh đơn • Tích điểm nhanh</p>
+                            </div>
+                            <div class="flex justify-end"><span class="text-gold text-sm uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Jouer →</span></div>
+                        </div>
+
+                        <div onclick="app.gotoGame('blackjack')" class="game-card p-6 rounded-lg cursor-pointer group flex flex-col justify-between">
+                            <div>
+                                <div class="flex justify-between items-start">
+                                    <h3 class="font-serif text-3xl text-ivory italic group-hover:text-gold transition-colors">Blackjack</h3>
+                                    <span class="text-[10px] border border-gray-700 text-gray-400 px-2 py-0.5 rounded uppercase">21 Royale</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2 font-sans">1 vs Dealer • Chiến thuật</p>
+                            </div>
+                            <div class="flex justify-end"><span class="text-gold text-sm uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Jouer →</span></div>
+                        </div>
+                        
+                        <div onclick="app.gotoGame('trading')" class="game-card p-6 rounded-lg cursor-pointer group flex flex-col justify-between" style="border-color: rgba(34, 197, 94, 0.2);">
+                            <div>
+                                <div class="flex justify-between items-start">
+                                    <h3 class="font-serif text-3xl text-ivory italic group-hover:text-green-400 transition-colors">Trading 30s</h3>
+                                    <span class="text-[10px] border border-green-800 text-green-400 px-2 py-0.5 rounded uppercase">HOT</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2 font-sans">Candles • Leverage • High Risk</p>
+                            </div>
+                            <div class="flex justify-end"><span class="text-green-400 text-sm uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Trade →</span></div>
+                        </div>
+                        
+                        <div onclick="app.gotoGame('treasure')" class="game-card p-6 rounded-lg cursor-pointer group flex flex-col justify-between" style="border-color: #8a734b;">
+                            <div>
+                                <div class="flex justify-between items-start">
+                                    <h3 class="font-serif text-3xl text-ivory italic group-hover:text-[#e0c080] transition-colors">Tìm Kho Báu</h3>
+                                    <span class="text-[10px] border border-[#8a734b] text-[#e0c080] px-2 py-0.5 rounded uppercase">x36 Boom</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2 font-sans">Đào đất • May mắn • Nổ hũ</p>
+                            </div>
+                            <div class="flex justify-end"><span class="text-[#e0c080] text-sm uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Dig →</span></div>
+                        </div>
+
+                        <div onclick="app.gotoGame('racing')" class="game-card p-6 rounded-lg cursor-pointer group flex flex-col justify-between" style="border-color: #d97706;">
+                            <div>
+                                <div class="flex justify-between items-start">
+                                    <h3 class="font-serif text-3xl text-ivory italic group-hover:text-amber-500 transition-colors">Royal Derby</h3>
+                                    <span class="text-[10px] border border-amber-700 text-amber-500 px-2 py-0.5 rounded uppercase">Live</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2 font-sans">Đua Ngựa • Kịch Tính</p>
+                            </div>
+                            <div class="flex justify-end"><span class="text-amber-500 text-sm uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Race →</span></div>
+                        </div>
                     </div>
 
-                    <div onclick="app.gotoGame('taixiu')" class="game-card p-6 rounded-lg cursor-pointer group flex flex-col justify-between h-40">
-                        <div>
-                            <div class="flex justify-between items-start">
-                                <h3 class="font-serif text-2xl text-ivory italic group-hover:text-gold transition-colors">Tài Xỉu Solo</h3>
-                                <span class="text-[10px] border border-gold text-gold px-2 py-0.5 rounded uppercase">Popular</span>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-2 font-sans">Sảnh đơn • Tích điểm nhanh</p>
-                        </div>
-                        <div class="flex justify-end"><span class="text-gold text-sm uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Jouer →</span></div>
-                    </div>
-
-                    <div onclick="app.gotoGame('blackjack')" class="game-card p-6 rounded-lg cursor-pointer group flex flex-col justify-between h-40">
-                        <div>
-                            <div class="flex justify-between items-start">
-                                <h3 class="font-serif text-2xl text-ivory italic group-hover:text-gold transition-colors">Blackjack</h3>
-                                <span class="text-[10px] border border-gray-700 text-gray-400 px-2 py-0.5 rounded uppercase">21 Royale</span>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-2 font-sans">1 vs Dealer • Chiến thuật</p>
-                        </div>
-                        <div class="flex justify-end"><span class="text-gold text-sm uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Jouer →</span></div>
-                    </div>
-                    
-                    <div onclick="app.gotoGame('trading')" class="game-card p-6 rounded-lg cursor-pointer group flex flex-col justify-between h-40" style="border-color: rgba(34, 197, 94, 0.2);">
-                        <div>
-                            <div class="flex justify-between items-start">
-                                <h3 class="font-serif text-2xl text-ivory italic group-hover:text-green-400 transition-colors">Trading 30s</h3>
-                                <span class="text-[10px] border border-green-800 text-green-400 px-2 py-0.5 rounded uppercase">HOT</span>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-2 font-sans">Candles • Leverage • High Risk</p>
-                        </div>
-                        <div class="flex justify-end"><span class="text-green-400 text-sm uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Trade →</span></div>
-                    </div>
-                    
-                    <div onclick="app.gotoGame('treasure')" class="game-card p-6 rounded-lg cursor-pointer group flex flex-col justify-between h-40" style="border-color: #8a734b;">
-                        <div>
-                            <div class="flex justify-between items-start">
-                                <h3 class="font-serif text-2xl text-ivory italic group-hover:text-[#e0c080] transition-colors">Tìm Kho Báu</h3>
-                                <span class="text-[10px] border border-[#8a734b] text-[#e0c080] px-2 py-0.5 rounded uppercase">x36 Boom</span>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-2 font-sans">Đào đất • May mắn • Nổ hũ</p>
-                        </div>
-                        <div class="flex justify-end"><span class="text-[#e0c080] text-sm uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Dig →</span></div>
-                    </div>
-
-                    <div onclick="app.gotoGame('racing')" class="game-card p-6 rounded-lg cursor-pointer group flex flex-col justify-between h-40" style="border-color: #d97706;">
-                        <div>
-                            <div class="flex justify-between items-start">
-                                <h3 class="font-serif text-2xl text-ivory italic group-hover:text-amber-500 transition-colors">Royal Derby</h3>
-                                <span class="text-[10px] border border-amber-700 text-amber-500 px-2 py-0.5 rounded uppercase">Live</span>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-2 font-sans">Đua Ngựa • Kịch Tính</p>
-                        </div>
-                        <div class="flex justify-end"><span class="text-amber-500 text-sm uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Race →</span></div>
-                    </div>
-
-                    <div class="mt-8 mb-4 col-span-1 md:col-span-2 lg:col-span-4">
-                         <h3 class="text-[10px] text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <div class="w-full bg-[#121214] border border-white/5 rounded-xl p-4 md:p-6 mt-4">
+                         <h3 class="text-[10px] text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
                              <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
                              Người chơi gần đây
                          </h3>
-                         <div class="deepglass rounded-lg overflow-hidden max-w-md">
-                             <div id="live-feed-list" class="flex flex-col">
-                                 <div class="p-4 text-xs text-gray-500 text-center">Đang tải dữ liệu...</div>
-                             </div>
+                         <div id="live-feed-list" class="flex flex-col md:flex-row md:flex-wrap md:gap-4 w-full">
+                             <div class="w-full text-center text-xs text-gray-500 py-4">Đang tải dữ liệu...</div>
                          </div>
                     </div>
                 </div>
@@ -596,18 +597,18 @@
         </section>
 
         <section id="view-profile" class="view-section z-30 bg-[#0E0E10]">
-             <div class="p-6 h-full flex flex-col overflow-y-auto no-scrollbar w-full max-w-lg mx-auto">
-                <div class="flex justify-between items-center mb-4">
+             <div class="p-6 h-full flex flex-col overflow-y-auto no-scrollbar w-full max-w-lg mx-auto justify-center">
+                <div class="flex justify-between items-center mb-4 w-full">
                     <h2 class="font-serif text-3xl text-gold italic">Tài Khoản</h2>
                     <button onclick="app.switchView('view-hall')" class="text-gray-500 hover:text-white text-2xl">&times;</button>
                 </div>
                 
-                <div class="flex gap-2 mb-6 border-b border-white/10 pb-1">
+                <div class="flex gap-2 mb-6 border-b border-white/10 pb-1 w-full">
                     <button onclick="app.profile.switchTab('bank')" id="pf-tab-bank" class="flex-1 py-2 text-xs uppercase tracking-wider text-gold font-bold border-b-2 border-gold">Ngân Hàng</button>
                     <button onclick="app.profile.switchTab('perf')" id="pf-tab-perf" class="flex-1 py-2 text-xs uppercase tracking-wider text-gray-500">Hiệu Suất</button>
                 </div>
 
-                <div id="pf-content-bank" class="space-y-6">
+                <div id="pf-content-bank" class="space-y-6 w-full">
                     <div class="deepglass p-6 rounded-lg relative overflow-hidden">
                         <div class="absolute -top-10 -right-10 w-32 h-32 bg-gold/10 rounded-full blur-2xl"></div>
                         <p class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Số Dư Khả Dụng</p>
@@ -631,13 +632,13 @@
 
                     <div>
                         <h3 class="text-xs text-gray-500 uppercase tracking-widest mb-3">Lịch Sử Giao Dịch</h3>
-                        <div class="h-[400px] overflow-y-auto no-scrollbar space-y-2 pb-10" id="tx-history-list">
+                        <div class="h-[300px] overflow-y-auto no-scrollbar space-y-2 pb-10" id="tx-history-list">
                             <div class="p-4 text-center text-xs text-gray-600 italic">Chưa có giao dịch nào</div>
                         </div>
                     </div>
                 </div>
 
-                <div id="pf-content-perf" class="space-y-8 hidden">
+                <div id="pf-content-perf" class="space-y-8 hidden w-full">
                     <div class="grid grid-cols-2 gap-4">
                         <div class="deepglass p-4 rounded text-center">
                             <p class="text-[10px] text-gray-500 uppercase">Total Wins</p>
@@ -767,12 +768,12 @@
                 </div>
             </div>
 
-            <div class="w-full h-full flex flex-col items-center p-6 py-12 bg-[#1a1510] max-w-xl mx-auto lg:max-w-4xl lg:justify-center">
+            <div class="w-full h-full flex flex-col justify-center items-center p-6 py-12 bg-[#1a1510] max-w-xl mx-auto lg:max-w-4xl">
                 <h2 class="font-serif text-3xl text-[#e0c080] italic mt-8 lg:mt-0">Treasure Hunt</h2>
                 <div class="text-xs text-gray-500 uppercase tracking-widest mb-6">6 Holes • 1 Win x36 • 1 Lose 50% • 4 Lose 100%</div>
 
-                <div class="w-full max-w-sm flex-1 flex flex-col justify-center lg:max-w-md lg:scale-125 lg:mb-12">
-                    <div id="treasure-land" class="treasure-map mb-4">
+                <div class="w-full max-w-sm flex-1 flex flex-col justify-center lg:max-w-md lg:mb-12">
+                    <div id="treasure-land" class="treasure-map mb-4 mx-auto lg:w-96 lg:h-96">
                     </div>
                     <div id="treasure-msg" class="h-8 text-center text-[#e0c080] font-serif italic text-xl opacity-0 transition-opacity">
                         Choose wisely...
@@ -810,13 +811,13 @@
                 </div>
             </div>
 
-            <div class="w-full h-full flex flex-col justify-between p-4 bg-[#1a110a] pt-16 max-w-xl mx-auto lg:max-w-5xl">
-                <div id="race-container" class="w-full flex-1 flex flex-col justify-center">
+            <div class="w-full h-full flex flex-col justify-center p-4 bg-[#1a110a] pt-16 max-w-xl mx-auto lg:max-w-6xl">
+                <div id="race-container" class="w-full flex-1 flex flex-col justify-center max-w-4xl mx-auto">
                     <div class="race-track-container mb-4" id="race-track"></div>
                     <div id="race-msg" class="h-8 text-center text-amber-500 font-serif italic text-xl opacity-0 transition-opacity">Win!</div>
                 </div>
 
-                <div class="w-full bg-[#2a1e15] p-4 rounded-t-xl border-t border-amber-900/30 shadow-[0_-5px_20px_rgba(0,0,0,0.5)] lg:rounded-xl">
+                <div class="w-full bg-[#2a1e15] p-4 rounded-t-xl border-t border-amber-900/30 shadow-[0_-5px_20px_rgba(0,0,0,0.5)] lg:rounded-xl max-w-4xl mx-auto">
                     <div class="flex justify-between items-center mb-3">
                         <span class="text-xs text-gray-500 uppercase tracking-widest">Số ngựa</span>
                         <div class="flex gap-2">
@@ -857,11 +858,11 @@
                 </div>
             </div>
 
-            <div class="w-full h-full flex flex-col items-center p-6 py-12 max-w-xl mx-auto lg:max-w-4xl lg:justify-center">
+            <div class="w-full h-full flex flex-col items-center justify-center p-6 py-12 max-w-xl mx-auto lg:max-w-4xl">
                 <h2 class="font-serif text-3xl text-gold italic mt-8 lg:mt-0">Solo Lounge</h2>
                 <div class="text-xs text-gray-500 uppercase tracking-widest mb-10">4-10 Xỉu • 11-17 Tài • Triple Lose</div>
 
-                <div class="relative w-full flex justify-center items-center h-32 mb-4 lg:scale-150 lg:mb-12">
+                <div class="relative w-full flex justify-center items-center h-32 mb-4 lg:transform lg:scale-150 lg:mb-24">
                     <div id="dice-wrapper" class="flex gap-4 perspective-600">
                         <div class="die" id="die-1" data-val="1"><div class="dot d5"></div></div>
                         <div class="die" id="die-2" data-val="2"><div class="dot d1"></div><div class="dot d9"></div></div>
@@ -909,27 +910,27 @@
                 </div>
             </div>
 
-            <div class="w-full h-full flex flex-col justify-between p-6 bg-[#0E0E10] max-w-3xl mx-auto lg:max-w-5xl">
-                <div class="mt-16 text-center lg:mt-24">
+            <div class="w-full h-full flex flex-col justify-center p-6 bg-[#0E0E10] max-w-3xl mx-auto lg:max-w-5xl">
+                <div class="mt-4 text-center lg:mt-0 flex-1 flex flex-col justify-center">
                     <div class="flex justify-center items-center gap-2 mb-2">
                         <p class="text-xs text-gray-500 uppercase tracking-widest">Dealer</p>
                         <div class="bg-white/10 px-2 py-0.5 rounded text-xs text-gray-300 font-mono opacity-0 transition-opacity" id="bj-dealer-score-box">Tổng: <span id="bj-dealer-score" class="font-bold text-white">0</span></div>
                     </div>
-                    <div id="bj-dealer-cards" class="flex justify-center gap-2 h-28 lg:scale-125 lg:mb-8"></div>
-                </div>
+                    <div id="bj-dealer-cards" class="flex justify-center gap-2 h-32 lg:transform lg:scale-125 mb-8"></div>
+                    
+                    <div class="text-center h-16 flex items-center justify-center my-4">
+                         <p id="bj-msg" class="font-serif text-3xl text-white italic transition-opacity opacity-0 shadow-black drop-shadow-lg">Blackjack!</p>
+                    </div>
 
-                <div class="text-center h-12 flex items-center justify-center">
-                    <p id="bj-msg" class="font-serif text-3xl text-white italic transition-opacity opacity-0 shadow-black drop-shadow-lg">Blackjack!</p>
-                </div>
-
-                <div class="mb-4 text-center lg:mb-12">
                     <div class="flex justify-center items-center gap-2 mb-2">
                          <div class="bg-gold/20 border border-gold/30 px-3 py-1 rounded text-sm text-gold font-mono">Tổng: <span id="bj-player-score" class="font-bold text-xl">0</span></div>
                     </div>
-                    <div id="bj-player-cards" class="flex justify-center gap-2 h-28 mb-6 lg:scale-125 lg:mb-10"></div>
+                    <div id="bj-player-cards" class="flex justify-center gap-2 h-32 mb-6 lg:transform lg:scale-125"></div>
                     <p class="text-xs text-gray-500 uppercase mb-4 tracking-widest">Your Hand</p>
+                </div>
 
-                    <div id="bj-controls-bet" class="w-full lg:max-w-md lg:mx-auto">
+                <div class="mb-4 text-center w-full lg:max-w-md lg:mx-auto">
+                    <div id="bj-controls-bet" class="w-full">
                         <div class="w-full max-w-xs mx-auto mb-4 bg-[#151517] p-3 rounded-lg border border-white/10">
                             <div class="relative mb-3"><input type="number" id="bj-bet-input" class="input-lux text-center text-2xl font-bold bg-transparent border-none p-0" value="500"></div>
                             <div class="grid grid-cols-5 gap-1">
@@ -942,7 +943,7 @@
                         </div>
                         <button onclick="app.blackjack.deal()" class="btn-lux w-full border-gold text-gold font-bold">DEAL CARDS</button>
                     </div>
-                    <div id="bj-controls-play" class="w-full flex gap-4 hidden lg:max-w-md lg:mx-auto">
+                    <div id="bj-controls-play" class="w-full flex gap-4 hidden">
                         <button onclick="app.blackjack.hit()" class="btn-lux flex-1 border-white/30 text-white hover:border-gold hover:bg-white/5 font-bold">HIT (+)</button>
                         <button onclick="app.blackjack.stand()" class="btn-lux flex-1 bg-gold/10 border-gold text-gold font-bold shadow-[0_0_15px_rgba(209,178,124,0.2)]">STAND (OK)</button>
                     </div>
@@ -998,7 +999,7 @@
         </section>
 
         <section id="view-leaderboard" class="view-section z-30 bg-[#0A0A0C]">
-             <div class="p-6 h-full flex flex-col w-full max-w-lg mx-auto">
+             <div class="p-6 h-full flex flex-col w-full max-w-lg mx-auto justify-center">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="font-serif text-3xl text-gold italic">Classement</h2>
                     <button onclick="app.switchView('view-hall')" class="text-gray-500 hover:text-white text-2xl">&times;</button>
@@ -2013,7 +2014,7 @@
                         const time = "Mới đây"; 
                         
                         return `
-                        <div class="feed-item p-3 flex justify-between items-center hover:bg-white/5 transition-colors">
+                        <div class="feed-item p-3 flex justify-between items-center hover:bg-white/5 transition-colors w-full md:w-auto md:flex-1 min-w-[200px] border-b border-white/5 md:border-b-0 md:border-r md:last:border-r-0">
                             <div class="flex items-center gap-3">
                                 <div class="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[10px] text-gray-400 font-serif">
                                     ${i.name.charAt(0)}
